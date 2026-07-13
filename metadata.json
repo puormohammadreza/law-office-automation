@@ -1,0 +1,10 @@
+{
+  "name": "Law Office Automation",
+  "description": "سامانه هوشمند اتوماسیون و محاسبات حقوقی دفتر وکالت رضا پورمحمد",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

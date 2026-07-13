@@ -1,0 +1,135 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client",
+      "description": "Represents a legal client",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nationalId": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "fatherName": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "address": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "name", "nationalId", "phoneNumber", "fatherName", "address", "createdAt", "userId"]
+    },
+    "LegalCase": {
+      "title": "Legal Case",
+      "description": "Represents a legal case",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "clientRole": { "type": "string" },
+        "opposingPartyName": { "type": "string" },
+        "caseNumber": { "type": "string" },
+        "courtCaseNumber": { "type": "string" },
+        "archiveNumber": { "type": "string" },
+        "title": { "type": "string" },
+        "stage": { "type": "string" },
+        "branch": { "type": "string" },
+        "status": { "type": "string" },
+        "description": { "type": "string" },
+        "appealCaseNumber": { "type": "string" },
+        "rejectionCaseNumber": { "type": "string" },
+        "supremeCaseNumber": { "type": "string" },
+        "executionCaseNumber": { "type": "string" },
+        "insolvencyCaseNumber": { "type": "string" },
+        "receivedFee": { "type": "number" },
+        "paidExpenses": { "type": "number" },
+        "totalContractAmount": { "type": "number" },
+        "downPayment": { "type": "number" },
+        "installments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "amount": { "type": "number" },
+              "dueDate": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "clientId", "clientName", "title", "stage", "status", "createdAt", "userId"]
+    },
+    "CaseNote": {
+      "title": "Case Note",
+      "description": "Represents a note for a legal case",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "caseId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "caseId", "title", "content", "createdAt", "userId"]
+    },
+    "CaseDocument": {
+      "title": "Case Document",
+      "description": "Represents a document for a legal case",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "caseId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["pdf", "image", "doc", "other"] },
+        "size": { "type": "string" },
+        "dataUrl": { "type": "string" },
+        "uploadedAt": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "caseId", "name", "type", "size", "uploadedAt", "userId"]
+    },
+    "LegalEvent": {
+      "title": "Legal Event",
+      "description": "Represents a legal event or hearing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "caseId": { "type": "string" },
+        "caseTitle": { "type": "string" },
+        "clientName": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "jalaliDate": { "type": "string" },
+        "time": { "type": "string" },
+        "alarmEnabled": { "type": "boolean" },
+        "description": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "title", "type", "jalaliDate", "time", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/clients/{clientId}": {
+      "schema": "Client",
+      "description": "User's legal clients"
+    },
+    "/users/{userId}/cases/{caseId}": {
+      "schema": "LegalCase",
+      "description": "User's legal cases"
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": "CaseNote",
+      "description": "Notes related to cases"
+    },
+    "/users/{userId}/documents/{docId}": {
+      "schema": "CaseDocument",
+      "description": "Documents related to cases"
+    },
+    "/users/{userId}/events/{eventId}": {
+      "schema": "LegalEvent",
+      "description": "Calendar events and hearings"
+    }
+  }
+}

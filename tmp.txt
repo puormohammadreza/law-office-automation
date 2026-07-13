@@ -1,0 +1,11 @@
+      installments: installmentsData,
+      associatedPersons: associatedPersonsData,
+      createdAt: new Date().toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" })
+    };
+
+    onAddCase(newCase);
+    setShowCaseForm(false);
+    // Reset
+    setCaseClientId("");
+    setCaseNo("");
+    setCourtCaseNo("");

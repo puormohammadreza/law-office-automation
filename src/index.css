@@ -1,0 +1,506 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #1e3a8a; /* Deep blue suited for lawyer theme */
+  --color-accent: #d97706;  /* Sophisticated amber */
+  
+  --animate-shimmer: shimmer 2s infinite;
+  --animate-fadeIn: fadeIn 0.4s ease-out;
+  --animate-spin-slow: spin 3s linear infinite;
+
+  @keyframes shimmer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* Base style resets and customizations */
+html, body {
+  font-family: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbars for a clean workspace experience */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animations helper classes */
+.shine-gold {
+  background: linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #d97706 100%);
+  background-size: 200% auto;
+  animation: shine 3s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* ─── TURQUOISE THEME VARIABLES & OVERRIDES ─── */
+.theme-turquoise {
+  /* Override Tailwind CSS variables inside this scope */
+  --color-primary: #0f766e !important;
+  --color-accent: #14b8a6 !important;
+  
+  --color-amber-50: #f0fdfa !important;
+  --color-amber-100: #ccfbf1 !important;
+  --color-amber-200: #99f6e4 !important;
+  --color-amber-300: #5eead4 !important;
+  --color-amber-400: #2dd4bf !important;
+  --color-amber-500: #14b8a6 !important; /* Turquoise accent */
+  --color-amber-600: #0d9488 !important; /* Turquoise dark accent */
+  --color-amber-700: #0f766e !important;
+  --color-amber-800: #115e59 !important;
+  --color-amber-900: #134e4a !important;
+  --color-amber-950: #042f2e !important;
+
+  --color-blue-50: #ecfeff !important;
+  --color-blue-100: #cffafe !important;
+  --color-blue-200: #a5f3fc !important;
+  --color-blue-300: #67e8f9 !important;
+  --color-blue-400: #22d3ee !important;
+  --color-blue-500: #06b6d4 !important; /* Bright Cyan-Turquoise */
+  --color-blue-600: #0891b2 !important; /* Darker Cyan-Turquoise */
+  --color-blue-700: #0e7490 !important;
+  --color-blue-800: #155e75 !important;
+  --color-blue-900: #164e63 !important;
+
+  --color-slate-50: #ffffff !important; /* Clean White main backgrounds */
+  --color-slate-900: #0b0f19 !important; /* Premium Sidebar Deep Black */
+  --color-slate-950: #000000 !important; /* Pure Black Elements */
+
+  background-color: #ffffff !important;
+}
+
+/* Force standard hardcoded tailwind utility class overrides for ultimate color-sweep accuracy */
+.theme-turquoise .shine-gold {
+  background: linear-gradient(90deg, #14b8a6 0%, #22d3ee 50%, #14b8a6 100%) !important;
+  background-size: 200% auto !important;
+}
+
+.theme-turquoise .bg-slate-50 {
+  background-color: #fafbfc !important;
+}
+
+.theme-turquoise .bg-amber-500 {
+  background-color: #14b8a6 !important;
+}
+
+.theme-turquoise .text-amber-500 {
+  color: #14b8a6 !important;
+}
+
+.theme-turquoise .text-amber-400 {
+  color: #2dd4bf !important;
+}
+
+.theme-turquoise .border-amber-500\/20 {
+  border-color: rgba(20, 184, 166, 0.2) !important;
+}
+
+.theme-turquoise .border-amber-500\/30 {
+  border-color: rgba(20, 184, 166, 0.35) !important;
+}
+
+.theme-turquoise .bg-amber-500\/10 {
+  background-color: rgba(20, 184, 166, 0.1) !important;
+}
+
+.theme-turquoise .bg-amber-500\/15 {
+  background-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+.theme-turquoise .hover\:bg-amber-500\/30:hover {
+  background-color: rgba(20, 184, 166, 0.28) !important;
+}
+
+.theme-turquoise .shadow-amber-500\/10 {
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.12) !important;
+}
+
+.theme-turquoise .text-slate-950 {
+  color: #000000 !important;
+}
+
+.theme-turquoise .text-slate-705 {
+  color: #111827 !important;
+}
+
+/* ─── CRIMSON THEME ─── */
+.theme-crimson {
+  --color-primary: #be123c !important;
+  --color-accent: #f43f5e !important;
+  
+  --color-amber-50: #fff1f2 !important;
+  --color-amber-100: #ffe4e6 !important;
+  --color-amber-200: #fecdd3 !important;
+  --color-amber-300: #fda4af !important;
+  --color-amber-400: #fb7185 !important;
+  --color-amber-500: #f43f5e !important;
+  --color-amber-600: #e11d48 !important;
+  --color-amber-700: #be123c !important;
+  --color-amber-800: #9f1239 !important;
+  --color-amber-900: #881337 !important;
+  --color-amber-950: #4c0519 !important;
+
+  --color-blue-50: #fff1f2 !important;
+  --color-blue-100: #ffe4e6 !important;
+  --color-blue-200: #fecdd3 !important;
+  --color-blue-300: #fda4af !important;
+  --color-blue-400: #fb7185 !important;
+  --color-blue-500: #f43f5e !important;
+  --color-blue-600: #e11d48 !important;
+  --color-blue-700: #be123c !important;
+  --color-blue-800: #9f1239 !important;
+  --color-blue-900: #881337 !important;
+
+  background-color: #ffffff !important;
+}
+
+.theme-crimson .shine-gold {
+  background: linear-gradient(90deg, #f43f5e 0%, #fb7185 50%, #f43f5e 100%) !important;
+  background-size: 200% auto !important;
+}
+.theme-crimson .bg-slate-50 {
+  background-color: #fafafb !important;
+}
+.theme-crimson .bg-amber-500 {
+  background-color: #f43f5e !important;
+}
+.theme-crimson .text-amber-500 {
+  color: #f43f5e !important;
+}
+.theme-crimson .text-amber-400 {
+  color: #fb7185 !important;
+}
+.theme-crimson .border-amber-500\/20 {
+  border-color: rgba(244, 63, 94, 0.2) !important;
+}
+.theme-crimson .border-amber-500\/30 {
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+.theme-crimson .bg-amber-500\/10 {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+}
+.theme-crimson .bg-amber-500\/15 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+.theme-crimson .hover\:bg-amber-500\/30:hover {
+  background-color: rgba(244, 63, 94, 0.28) !important;
+}
+.theme-crimson .shadow-amber-500\/10 {
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.12) !important;
+}
+
+/* ─── EMERALD THEME ─── */
+.theme-emerald {
+  --color-primary: #047857 !important;
+  --color-accent: #10b981 !important;
+  
+  --color-amber-50: #ecfdf5 !important;
+  --color-amber-100: #d1fae5 !important;
+  --color-amber-200: #a7f3d0 !important;
+  --color-amber-300: #6ee7b7 !important;
+  --color-amber-400: #34d399 !important;
+  --color-amber-500: #10b981 !important;
+  --color-amber-600: #059669 !important;
+  --color-amber-700: #047857 !important;
+  --color-amber-800: #065f46 !important;
+  --color-amber-900: #064e3b !important;
+  --color-amber-950: #022c22 !important;
+
+  --color-blue-50: #ecfdf5 !important;
+  --color-blue-100: #d1fae5 !important;
+  --color-blue-200: #a7f3d0 !important;
+  --color-blue-300: #6ee7b7 !important;
+  --color-blue-400: #34d399 !important;
+  --color-blue-500: #10b981 !important;
+  --color-blue-600: #059669 !important;
+  --color-blue-700: #047857 !important;
+  --color-blue-800: #065f46 !important;
+  --color-blue-900: #064e3b !important;
+
+  background-color: #ffffff !important;
+}
+
+.theme-emerald .shine-gold {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 50%, #10b981 100%) !important;
+  background-size: 200% auto !important;
+}
+.theme-emerald .bg-slate-50 {
+  background-color: #f9fbf9 !important;
+}
+.theme-emerald .bg-amber-500 {
+  background-color: #10b981 !important;
+}
+.theme-emerald .text-amber-500 {
+  color: #10b981 !important;
+}
+.theme-emerald .text-amber-400 {
+  color: #34d399 !important;
+}
+.theme-emerald .border-amber-500\/20 {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+.theme-emerald .border-amber-500\/30 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+.theme-emerald .bg-amber-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+.theme-emerald .bg-amber-500\/15 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+.theme-emerald .hover\:bg-amber-500\/30:hover {
+  background-color: rgba(16, 185, 129, 0.28) !important;
+}
+.theme-emerald .shadow-amber-500\/10 {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12) !important;
+}
+
+/* ─── ROYAL BLUE THEME ─── */
+.theme-royal {
+  --color-primary: #1d4ed8 !important;
+  --color-accent: #3b82f6 !important;
+  
+  --color-amber-50: #eff6ff !important;
+  --color-amber-100: #dbeafe !important;
+  --color-amber-200: #bfdbfe !important;
+  --color-amber-300: #93c5fd !important;
+  --color-amber-400: #60a5fa !important;
+  --color-amber-500: #3b82f6 !important;
+  --color-amber-600: #2563eb !important;
+  --color-amber-700: #1d4ed8 !important;
+  --color-amber-800: #1e40af !important;
+  --color-amber-900: #1e3a8a !important;
+  --color-amber-950: #172554 !important;
+
+  --color-blue-50: #eff6ff !important;
+  --color-blue-100: #dbeafe !important;
+  --color-blue-200: #bfdbfe !important;
+  --color-blue-300: #93c5fd !important;
+  --color-blue-400: #60a5fa !important;
+  --color-blue-500: #3b82f6 !important;
+  --color-blue-600: #2563eb !important;
+  --color-blue-700: #1d4ed8 !important;
+  --color-blue-800: #1e40af !important;
+  --color-blue-900: #1e3a8a !important;
+
+  background-color: #ffffff !important;
+}
+
+.theme-royal .shine-gold {
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%) !important;
+  background-size: 200% auto !important;
+}
+.theme-royal .bg-slate-50 {
+  background-color: #f8fafc !important;
+}
+.theme-royal .bg-amber-500 {
+  background-color: #3b82f6 !important;
+}
+.theme-royal .text-amber-500 {
+  color: #3b82f6 !important;
+}
+.theme-royal .text-amber-400 {
+  color: #60a5fa !important;
+}
+.theme-royal .border-amber-500\/20 {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+.theme-royal .border-amber-500\/30 {
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+.theme-royal .bg-amber-500\/10 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+.theme-royal .bg-amber-500\/15 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+.theme-royal .hover\:bg-amber-500\/30:hover {
+  background-color: rgba(59, 130, 246, 0.28) !important;
+}
+.theme-royal .shadow-amber-500\/10 {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12) !important;
+}
+
+/* ─── OLED ULTRA-DARK THEME (BATTERY-SAVING) ─── */
+.theme-dark {
+  background-color: #000000 !important;
+  color: #f4f4f5 !important;
+
+  /* Custom Tailwind Theme Overrides */
+  --color-slate-50: #000000 !important;
+  --color-slate-100: #09090b !important;
+  --color-slate-200: #18181b !important;
+  --color-slate-300: #27272a !important;
+  --color-slate-400: #71717a !important;
+  --color-slate-500: #a1a1aa !important;
+  --color-slate-600: #d4d4d8 !important;
+  --color-slate-700: #e4e4e7 !important;
+  --color-slate-800: #f4f4f5 !important;
+  --color-slate-900: #ffffff !important;
+  --color-slate-950: #ffffff !important;
+
+  /* We override white backgrounds inside this scope to pure black */
+  --color-white: #000000 !important;
+  --color-bg-white: #000000 !important;
+}
+
+/* Force dark styles on children */
+.theme-dark .bg-white {
+  background-color: #000000 !important;
+  border-color: #27272a !important;
+}
+
+.theme-dark .bg-slate-50 {
+  background-color: #000000 !important;
+}
+
+.theme-dark .bg-slate-100 {
+  background-color: #09090b !important;
+}
+
+.theme-dark .bg-slate-200 {
+  background-color: #18181b !important;
+}
+
+.theme-dark .border-slate-100,
+.theme-dark .border-slate-200 {
+  border-color: #27272a !important;
+}
+
+.theme-dark .border-slate-300 {
+  border-color: #3f3f46 !important;
+}
+
+.theme-dark .text-slate-950,
+.theme-dark .text-slate-900,
+.theme-dark .text-slate-800,
+.theme-dark .text-slate-705,
+.theme-dark .text-slate-700,
+.theme-dark .text-slate-600,
+.theme-dark .text-slate-900\/90 {
+  color: #f4f4f5 !important;
+}
+
+.theme-dark .text-slate-500,
+.theme-dark .text-slate-400 {
+  color: #a1a1aa !important;
+}
+
+.theme-dark .text-slate-300 {
+  color: #3f3f46 !important;
+}
+
+/* Inputs & selects */
+.theme-dark input[type="text"],
+.theme-dark input[type="number"],
+.theme-dark input[type="date"],
+.theme-dark input[type="time"],
+.theme-dark textarea,
+.theme-dark select {
+  background-color: #09090b !important;
+  color: #ffffff !important;
+  border-color: #27272a !important;
+}
+
+.theme-dark input[type="text"]::placeholder,
+.theme-dark input[type="number"]::placeholder,
+.theme-dark textarea::placeholder {
+  color: #71717a !important;
+}
+
+/* Scrollbars on dark mode */
+.theme-dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.theme-dark ::-webkit-scrollbar-track {
+  background: #000000;
+}
+.theme-dark ::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+.theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Table overrides */
+.theme-dark table th {
+  background-color: #09090b !important;
+  color: #ffffff !important;
+}
+
+.theme-dark table td {
+  border-color: #18181b !important;
+  color: #e4e4e7 !important;
+}
+
+.theme-dark tr:hover {
+  background-color: #09090b !important;
+}
+
+/* Special boxes, buttons and indicators that need to look distinctive */
+.theme-dark .bg-amber-500 {
+  background-color: #f59e0b !important; /* Gold stays gold but brighter */
+}
+
+.theme-dark .text-amber-500 {
+  color: #f59e0b !important;
+}
+
+.theme-dark .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+.theme-dark .border-amber-500\/20 {
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.theme-dark .border-amber-500\/30 {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.theme-dark .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+
+.theme-dark .bg-amber-500\/15 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+}
+
+.theme-dark .hover\:bg-amber-500\/30:hover {
+  background-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.theme-dark .shadow-amber-500\/10 {
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15) !important;
+}
+
+.theme-dark .shine-gold {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%) !important;
+  background-size: 200% auto !important;
+}
