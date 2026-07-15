@@ -813,8 +813,8 @@ export default function Dashboard({
                       </div>
 
                       <div className="border-t border-emerald-200/50 pt-2 flex items-center justify-between font-bold">
-                        <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-emerald-850 bg-emerald-500/10">
-                          از تاریخ: {toPersianDigits(ev.jalaliDate)}
+                        <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-emerald-850 bg-emerald-500/10">
+                          تاریخ جلسه رسیدگی: {toPersianDigits(ev.jalaliDate)}
                         </span>
                         <span className="text-xs md:text-sm font-medium font-sans flex items-center">
                           {dev.repeatSelected &&
@@ -1059,12 +1059,12 @@ export default function Dashboard({
                         className={`border-t pt-2 flex items-center justify-between font-bold ${isNonJudicial ? "border-purple-200/60" : "border-slate-200/60"}`}
                       >
                         {isNonJudicial ? (
-                          <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-purple-800 bg-purple-100">
+                          <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-emerald-700 bg-emerald-500/10">
                             از تاریخ: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         ) : (
-                          <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-red-600 bg-red-500/10">
-                            از تاریخ: {toPersianDigits(ev.jalaliDate)}
+                          <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-emerald-700 bg-emerald-500/10">
+                            {ev.type === "جلسه دادرسی" ? "تاریخ جلسه رسیدگی" : "از تاریخ"}: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         )}
                         <span className="text-xs md:text-sm flex items-center">
@@ -1072,7 +1072,7 @@ export default function Dashboard({
                           dev.repeatSelected !== "بدون تکرار" &&
                           dev.endRepeatDate ? (
                             <span
-                              className={`px-2 py-1 rounded font-mono font-black ${isNonJudicial ? "text-amber-800 bg-amber-500/10" : "text-amber-800 bg-amber-500/10"}`}
+                              className={`px-2 py-1 rounded font-mono font-black ${isNonJudicial ? "text-purple-800 bg-purple-100" : "text-red-600 bg-red-500/10"}`}
                             >
                               تا تاریخ: {toPersianDigits(dev.endRepeatDate)}
                             </span>

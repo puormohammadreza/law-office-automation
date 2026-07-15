@@ -1,0 +1,46 @@
+                <div className="space-y-2">
+                  {caseAssociatedPersons.map((p, idx) => (
+                    <div key={idx} className="flex gap-2 items-center bg-slate-50/50 p-2 rounded-xl border border-slate-100">
+                      <div className="flex-1 space-y-1">
+                        <label className="text-[10px] text-slate-400 block pr-1">نام و نام خانوادگی</label>
+                        <input 
+                          type="text" 
+                          placeholder="مثال: علی احمدی" 
+                          value={p.name} 
+                          onChange={(e) => {
+                            const newList = [...caseAssociatedPersons];
+                            newList[idx].name = e.target.value;
+                            setCaseAssociatedPersons(newList);
+                          }} 
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-slate-900 text-xs font-bold" 
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <label className="text-[10px] text-slate-400 block pr-1">شماره تماس</label>
+                        <input 
+                          type="text" 
+                          placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹" 
+                          value={p.phone} 
+                          onChange={(e) => {
+                            const newList = [...caseAssociatedPersons];
+                            newList[idx].phone = e.target.value;
+                            setCaseAssociatedPersons(newList);
+                          }} 
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-slate-900 text-xs font-mono font-medium text-left" 
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="pt-5">
+                        <button 
+                          type="button" 
+                          onClick={() => setCaseAssociatedPersons(caseAssociatedPersons.filter((_, i) => i !== idx))} 
+                          className="text-red-500 hover:text-red-700 p-2 cursor-pointer bg-red-50 hover:bg-red-100 rounded-lg transition"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+

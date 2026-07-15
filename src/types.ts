@@ -41,14 +41,19 @@ export interface LegalCase {
   stages?: {                // سوابق مراحل رسیدگی
     stage1?: CaseStage;
     stage1ArchiveNumber?: string;
+    stage1Branch?: string;
     stage2?: CaseStage;
     stage2ArchiveNumber?: string;
+    stage2Branch?: string;
     stage3?: CaseStage;
     stage3ArchiveNumber?: string;
+    stage3Branch?: string;
     stage4?: CaseStage;
     stage4ArchiveNumber?: string;
+    stage4Branch?: string;
     stage5?: CaseStage;
     stage5ArchiveNumber?: string;
+    stage5Branch?: string;
   };
   branch: string;           // شعبه رسیدگی کننده (مثلاً شعبه ۱۰۱ دادگاه عمومی حقوقی)
   status: CaseStatus;       // وضعیت جاری پرونده
@@ -88,7 +93,7 @@ export interface LegalCase {
     cardNumber?: string; // شماره کارت / شبا
     receiptImage?: string; // تصویر رسید / فیش پرداخت
   }[]; // پرداختی‌های مختلف موکل
-  associatedPersons?: { name: string; phone: string }[]; // افراد مرتبط
+  associatedPersons?: { name: string; phone: string; role?: string }[]; // افراد مرتبط
   createdAt: string;        // تاریخ ثبت در سیستم
 }
 

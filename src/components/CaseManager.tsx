@@ -221,14 +221,19 @@ export default function CaseManager({
   const [caseStages, setCaseStages] = useState<{
     stage1?: CaseStage;
     stage1ArchiveNumber?: string;
+    stage1Branch?: string;
     stage2?: CaseStage;
     stage2ArchiveNumber?: string;
+    stage2Branch?: string;
     stage3?: CaseStage;
     stage3ArchiveNumber?: string;
+    stage3Branch?: string;
     stage4?: CaseStage;
     stage4ArchiveNumber?: string;
+    stage4Branch?: string;
     stage5?: CaseStage;
     stage5ArchiveNumber?: string;
+    stage5Branch?: string;
   }>({});
   const [showCaseStagesMenu, setShowCaseStagesMenu] = useState(false);
   const [caseBranch, setCaseBranch] = useState("");
@@ -250,7 +255,7 @@ export default function CaseManager({
   const [caseInstallments, setCaseInstallments] = useState<{ id?: string, amount: string, dueDate: string, isPaid?: boolean, paidDate?: string, note?: string }[]>([]);
   const [caseTempDocs, setCaseTempDocs] = useState<{name: string, dataUrl: string, type: string, size: string}[]>([]);
   const [casePayments, setCasePayments] = useState<{ id: string, title: string, amount: string, type: string, date: string, cardNumber: string, receiptImage?: string }[]>([]);
-  const [caseAssociatedPersons, setCaseAssociatedPersons] = useState<{ name: string, phone: string }[]>([]);
+  const [caseAssociatedPersons, setCaseAssociatedPersons] = useState<{ name: string, phone: string, role?: string }[]>([]);
   const [previewSubPage, setPreviewSubPage] = useState<number | null>(null);
   const [selectedReceiptImage, setSelectedReceiptImage] = useState<string | null>(null);
   const [docNameInput, setDocNameInput] = useState("");
@@ -924,7 +929,12 @@ export default function CaseManager({
                 ${hasValue(caseObj.powerOfAttorneyDate) ? `<p><strong>تاریخ اخذ وکالت:</strong> <span style="color: #1e40af; font-weight: 600; font-family: monospace;">${toPersianDigits(caseObj.powerOfAttorneyDate)}</span></p>` : ""}
                 ${hasValue(caseObj.closedDate) ? `<p><strong>تاریخ مختومه شدن:</strong> <span style="color: #1e40af; font-weight: 600; font-family: monospace;">${toPersianDigits(caseObj.closedDate)}</span></p>` : ""}
                 ${hasValue(caseObj.createdAt) ? `<p><strong>تاریخ ثبت در سیستم:</strong> <span style="color: #1e40af; font-weight: 600; font-family: monospace;">${toPersianDigits(caseObj.createdAt)}</span></p>` : ""}
-                ${hasValue(caseObj.stage) ? `<p><strong>مرحلۀ پرونده:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.stage}</span></p>` : ""}
+                ${hasValue(caseObj.stage) ? `<p><strong>مرحله فعلی پرونده:</strong> <span style="color: #e11d48; font-weight: 600;">${caseObj.stage}</span></p>` : ""}
+                ${hasValue(caseObj.stages?.stage1) ? `<p><strong>مرحله اول:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.stages?.stage1}</span> ${hasValue(caseObj.stages?.stage1Branch) ? `<span style="color: #64748b;">(شعبه: ${toPersianDigits(caseObj.stages?.stage1Branch || "")})</span>` : ""} ${hasValue(caseObj.stages?.stage1ArchiveNumber) ? `<span style="color: #64748b; font-family: monospace;">(بایگانی: ${toPersianDigits(caseObj.stages?.stage1ArchiveNumber || "")})</span>` : ""}</p>` : ""}
+                ${hasValue(caseObj.stages?.stage2) ? `<p><strong>مرحله دوم:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.stages?.stage2}</span> ${hasValue(caseObj.stages?.stage2Branch) ? `<span style="color: #64748b;">(شعبه: ${toPersianDigits(caseObj.stages?.stage2Branch || "")})</span>` : ""} ${hasValue(caseObj.stages?.stage2ArchiveNumber) ? `<span style="color: #64748b; font-family: monospace;">(بایگانی: ${toPersianDigits(caseObj.stages?.stage2ArchiveNumber || "")})</span>` : ""}</p>` : ""}
+                ${hasValue(caseObj.stages?.stage3) ? `<p><strong>مرحله سوم:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.stages?.stage3}</span> ${hasValue(caseObj.stages?.stage3Branch) ? `<span style="color: #64748b;">(شعبه: ${toPersianDigits(caseObj.stages?.stage3Branch || "")})</span>` : ""} ${hasValue(caseObj.stages?.stage3ArchiveNumber) ? `<span style="color: #64748b; font-family: monospace;">(بایگانی: ${toPersianDigits(caseObj.stages?.stage3ArchiveNumber || "")})</span>` : ""}</p>` : ""}
+                ${hasValue(caseObj.stages?.stage4) ? `<p><strong>مرحله چهارم:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.stages?.stage4}</span> ${hasValue(caseObj.stages?.stage4Branch) ? `<span style="color: #64748b;">(شعبه: ${toPersianDigits(caseObj.stages?.stage4Branch || "")})</span>` : ""} ${hasValue(caseObj.stages?.stage4ArchiveNumber) ? `<span style="color: #64748b; font-family: monospace;">(بایگانی: ${toPersianDigits(caseObj.stages?.stage4ArchiveNumber || "")})</span>` : ""}</p>` : ""}
+                ${hasValue(caseObj.stages?.stage5) ? `<p><strong>مرحله پنجم:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.stages?.stage5}</span> ${hasValue(caseObj.stages?.stage5Branch) ? `<span style="color: #64748b;">(شعبه: ${toPersianDigits(caseObj.stages?.stage5Branch || "")})</span>` : ""} ${hasValue(caseObj.stages?.stage5ArchiveNumber) ? `<span style="color: #64748b; font-family: monospace;">(بایگانی: ${toPersianDigits(caseObj.stages?.stage5ArchiveNumber || "")})</span>` : ""}</p>` : ""}
                 ${hasValue(caseObj.status) ? `<p><strong>وضعیت پرونده:</strong> <span style="color: #1e40af; font-weight: 600;">${caseObj.status}</span></p>` : ""}
                 ${hasValue(caseObj.courtCaseNumber) ? `<p><strong>شماره دادگاه بدوی:</strong> <span style="color: #1e40af; font-weight: 600; font-family: monospace;">${toPersianDigits(caseObj.courtCaseNumber)}</span></p>` : ""}
                 ${hasValue(caseObj.archiveNumber) ? `<p><strong>کلاسه بایگانی دفتر:</strong> <span style="color: #1e40af; font-weight: 600; font-family: monospace;">${toPersianDigits(caseObj.archiveNumber)}</span></p>` : ""}
@@ -1076,6 +1086,7 @@ export default function CaseManager({
                 <thead>
                   <tr class="bg-slate-100 font-bold border-b border-slate-350">
                     <th class="border border-slate-350 p-2 text-right">نام و نام خانوادگی</th>
+                    <th class="border border-slate-350 p-2 text-right">سمت</th>
                     <th class="border border-slate-350 p-2 text-right">شماره تماس (تلفن همراه)</th>
                   </tr>
                 </thead>
@@ -1083,6 +1094,7 @@ export default function CaseManager({
                   ${caseObj.associatedPersons.map(person => `
                     <tr>
                       <td class="border border-slate-350 p-2" style="color: #1e40af; font-weight: 600;">${person.name || "-"}</td>
+                      <td class="border border-slate-350 p-2" style="color: #1e40af; font-weight: 600;">${person.role || "-"}</td>
                       <td class="border border-slate-350 p-2 font-mono" style="color: #1e40af; font-weight: bold;">${person.phone ? toPersianDigits(person.phone) : "-"}</td>
                     </tr>
                   `).join("")}
@@ -2366,23 +2378,24 @@ export default function CaseManager({
                       <>
                         {/* مرحله رسیدگی */}
                         <div className="space-y-1 col-span-1 sm:col-span-1 lg:col-span-1 relative">
-                          <label className="text-slate-500">مرحله رسیدگی</label>
+                          <label className="text-slate-500 font-bold">مرحله فعلی رسیدگی</label>
                           <div
                             onClick={() => setShowCaseStagesMenu(!showCaseStagesMenu)}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-xs font-medium flex justify-between items-center text-slate-800"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-xs font-semibold flex justify-between items-center text-slate-800"
                           >
-                            <span>{caseStage}</span>
-                            <span>▼</span>
+                            <span className="text-red-600 font-bold">{caseStage}</span>
+                            <span className="text-slate-400">▼</span>
                           </div>
                           {showCaseStagesMenu && (
-                            <div className="absolute z-20 top-full left-0 sm:left-auto sm:right-0 mt-1 w-[280px] sm:w-[380px] md:w-[440px] bg-white border border-slate-200 rounded-xl shadow-lg p-3 flex flex-col gap-2">
+                            <div className="absolute z-20 top-full left-0 sm:left-auto sm:right-0 mt-1 w-[320px] sm:w-[480px] md:w-[540px] bg-white border border-slate-200 rounded-xl shadow-lg p-3 flex flex-col gap-2">
                               {[1, 2, 3, 4, 5].map((num) => {
                                 const stageKey = `stage${num}` as const;
+                                const branchKey = `stage${num}Branch` as const;
                                 const archiveKey = `stage${num}ArchiveNumber` as const;
                                 return (
                                   <div key={num} className="flex flex-col gap-1 border-b border-slate-100 pb-2 last:border-0 last:pb-0">
                                     <label className="text-[10px] text-slate-500 font-bold">مرحله {num === 1 ? 'اول' : num === 2 ? 'دوم' : num === 3 ? 'سوم' : num === 4 ? 'چهارم' : 'پنجم'}</label>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-3 gap-2">
                                       <select
                                         value={caseStages[stageKey] || ''}
                                         onChange={(e) => {
@@ -2409,13 +2422,23 @@ export default function CaseManager({
                                       </select>
                                       <input
                                         type="text"
+                                        value={caseStages[branchKey] || ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setCaseStages(prev => ({ ...prev, [branchKey]: val }));
+                                        }}
+                                        placeholder="شعبه..."
+                                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-[10px] font-medium text-right"
+                                      />
+                                      <input
+                                        type="text"
                                         value={caseStages[archiveKey] || ''}
                                         onChange={(e) => {
                                           const val = e.target.value;
                                           setCaseStages(prev => ({ ...prev, [archiveKey]: val }));
                                         }}
-                                        placeholder="شماره بایگانی پرونده..."
-                                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-[10px] font-medium text-right"
+                                        placeholder="شماره بایگانی..."
+                                        className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-[10px] font-medium text-right font-mono"
                                       />
                                     </div>
                                   </div>
@@ -2970,6 +2993,20 @@ export default function CaseManager({
                         />
                       </div>
                       <div className="flex-1 space-y-1">
+                        <label className="text-[10px] text-slate-400 block pr-1">سمت</label>
+                        <input 
+                          type="text" 
+                          placeholder="مثال: کارشناس" 
+                          value={p.role || ""} 
+                          onChange={(e) => {
+                            const newList = [...caseAssociatedPersons];
+                            newList[idx].role = e.target.value;
+                            setCaseAssociatedPersons(newList);
+                          }} 
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-slate-900 text-xs font-bold" 
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
                         <label className="text-[10px] text-slate-400 block pr-1">شماره تماس</label>
                         <input 
                           type="text" 
@@ -3000,7 +3037,7 @@ export default function CaseManager({
 
               <button 
                 type="button" 
-                onClick={() => setCaseAssociatedPersons([...caseAssociatedPersons, { name: "", phone: "" }])} 
+                onClick={() => setCaseAssociatedPersons([...caseAssociatedPersons, { name: "", phone: "", role: "" }])} 
                 className="text-xs bg-slate-100 px-4 py-2 rounded-xl text-slate-700 font-bold hover:bg-slate-200 cursor-pointer w-full flex items-center justify-center gap-1 transition"
               >
                 <Plus className="w-4 h-4" />
@@ -3317,7 +3354,22 @@ export default function CaseManager({
                     <p className="text-slate-700"><strong>تاریخ ثبت پرونده:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(printableCase.createdAt)}</span></p>
                   )}
                   {hasValue(printableCase.stage) && (
-                    <p className="text-slate-700"><strong>مرحلۀ پرونده:</strong> <span className="text-blue-600 font-semibold">{printableCase.stage}</span></p>
+                    <p className="text-slate-700"><strong>مرحله فعلی پرونده:</strong> <span className="text-rose-600 font-semibold">{printableCase.stage}</span></p>
+                  )}
+                  {hasValue(printableCase.stages?.stage1) && (
+                    <p className="text-slate-700"><strong>مرحله اول:</strong> <span className="text-blue-600 font-semibold">{printableCase.stages?.stage1}</span> {hasValue(printableCase.stages?.stage1Branch) && <span className="text-slate-500 mr-1">(شعبه: {toPersianDigits(printableCase.stages?.stage1Branch || "")})</span>} {hasValue(printableCase.stages?.stage1ArchiveNumber) && <span className="text-slate-500 font-mono mr-1">(بایگانی: {toPersianDigits(printableCase.stages?.stage1ArchiveNumber || "")})</span>}</p>
+                  )}
+                  {hasValue(printableCase.stages?.stage2) && (
+                    <p className="text-slate-700"><strong>مرحله دوم:</strong> <span className="text-blue-600 font-semibold">{printableCase.stages?.stage2}</span> {hasValue(printableCase.stages?.stage2Branch) && <span className="text-slate-500 mr-1">(شعبه: {toPersianDigits(printableCase.stages?.stage2Branch || "")})</span>} {hasValue(printableCase.stages?.stage2ArchiveNumber) && <span className="text-slate-500 font-mono mr-1">(بایگانی: {toPersianDigits(printableCase.stages?.stage2ArchiveNumber || "")})</span>}</p>
+                  )}
+                  {hasValue(printableCase.stages?.stage3) && (
+                    <p className="text-slate-700"><strong>مرحله سوم:</strong> <span className="text-blue-600 font-semibold">{printableCase.stages?.stage3}</span> {hasValue(printableCase.stages?.stage3Branch) && <span className="text-slate-500 mr-1">(شعبه: {toPersianDigits(printableCase.stages?.stage3Branch || "")})</span>} {hasValue(printableCase.stages?.stage3ArchiveNumber) && <span className="text-slate-500 font-mono mr-1">(بایگانی: {toPersianDigits(printableCase.stages?.stage3ArchiveNumber || "")})</span>}</p>
+                  )}
+                  {hasValue(printableCase.stages?.stage4) && (
+                    <p className="text-slate-700"><strong>مرحله چهارم:</strong> <span className="text-blue-600 font-semibold">{printableCase.stages?.stage4}</span> {hasValue(printableCase.stages?.stage4Branch) && <span className="text-slate-500 mr-1">(شعبه: {toPersianDigits(printableCase.stages?.stage4Branch || "")})</span>} {hasValue(printableCase.stages?.stage4ArchiveNumber) && <span className="text-slate-500 font-mono mr-1">(بایگانی: {toPersianDigits(printableCase.stages?.stage4ArchiveNumber || "")})</span>}</p>
+                  )}
+                  {hasValue(printableCase.stages?.stage5) && (
+                    <p className="text-slate-700"><strong>مرحله پنجم:</strong> <span className="text-blue-600 font-semibold">{printableCase.stages?.stage5}</span> {hasValue(printableCase.stages?.stage5Branch) && <span className="text-slate-500 mr-1">(شعبه: {toPersianDigits(printableCase.stages?.stage5Branch || "")})</span>} {hasValue(printableCase.stages?.stage5ArchiveNumber) && <span className="text-slate-500 font-mono mr-1">(بایگانی: {toPersianDigits(printableCase.stages?.stage5ArchiveNumber || "")})</span>}</p>
                   )}
                   {hasValue(printableCase.status) && (
                     <p className="text-slate-700"><strong>وضعیت پرونده:</strong> <span className="text-blue-600 font-semibold">{printableCase.status}</span></p>
@@ -3351,6 +3403,24 @@ export default function CaseManager({
                   )}
                   {hasValue(printableCase.prosecutionCaseNumber) && (
                     <p className="text-slate-700"><strong>شماره پرونده دادیاری:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(printableCase.prosecutionCaseNumber)}</span></p>
+                  )}
+                  {printableCase.associatedPersons && printableCase.associatedPersons.length > 0 && (
+                    <div className="col-span-1 sm:col-span-2 mt-4 pt-4 border-t border-slate-200/60">
+                      <h4 className="text-xs font-extrabold text-slate-800 mb-2 border-r-4 border-amber-500 pr-2 pb-0.5">افراد مرتبط با پرونده:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                        {printableCase.associatedPersons.map((person, i) => (
+                          <div key={i} className="bg-white/80 border border-slate-200 p-3 rounded-xl flex flex-col gap-1 shadow-sm text-right">
+                            <p className="text-slate-700"><strong>نام و نام خانوادگی:</strong> <span className="text-blue-600 font-semibold">{person.name || "-"}</span></p>
+                            {hasValue(person.role) && (
+                              <p className="text-slate-700"><strong>سمت:</strong> <span className="text-blue-600 font-semibold">{person.role}</span></p>
+                            )}
+                            {hasValue(person.phone) && (
+                              <p className="text-slate-700"><strong>شماره تماس:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(person.phone)}</span></p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -3521,6 +3591,7 @@ export default function CaseManager({
                     <thead>
                       <tr className="bg-slate-100 font-bold text-slate-700">
                         <th className="border border-slate-200 p-3 text-right">نام و نام خانوادگی</th>
+                        <th className="border border-slate-200 p-3 text-right">سمت</th>
                         <th className="border border-slate-200 p-3 text-right">شماره تماس (تلفن همراه)</th>
                       </tr>
                     </thead>
@@ -3528,6 +3599,7 @@ export default function CaseManager({
                       {printableCase.associatedPersons.map((person, i) => (
                         <tr key={i} className="hover:bg-slate-50/50 transition">
                           <td className="border border-slate-200 p-3 text-blue-600 font-semibold">{person.name || "-"}</td>
+                          <td className="border border-slate-200 p-3 text-blue-600 font-semibold">{person.role || "-"}</td>
                           <td className="border border-slate-200 p-3 font-mono text-blue-600 font-semibold">{person.phone ? toPersianDigits(person.phone) : "-"}</td>
                         </tr>
                       ))}
