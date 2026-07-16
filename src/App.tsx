@@ -1,5 +1,5 @@
 import { safeStorage } from "./utils/safeStorage";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { loadAllData, saveData } from "./utils/persistentState";
 import { Client, LegalCase, CaseNote, CaseDocument, LegalEvent } from "./types";
@@ -21,6 +21,9 @@ import SecurityGate from "./components/SecurityGate";
 import BackupSecurityHub from "./components/BackupSecurityHub";
 import BackupCenter from "./components/BackupCenter";
 import PastEventsArchive from "./components/PastEventsArchive";
+import DebtsCredits from "./components/DebtsCredits";
+import BillsPayment from "./components/BillsPayment";
+import MedicationReminder from "./components/MedicationReminder";
 
 import Terminology from "./components/Terminology";
 import LawsDatabase from "./components/LawsDatabase";
@@ -65,7 +68,9 @@ import {
   Info,
   Sparkles,
   Gavel,
-  Palette
+  Palette,
+  Receipt,
+  Pill
 } from "lucide-react";
 
 import { auth, onAuthStateChanged } from "./firebase/config";
@@ -82,7 +87,7 @@ export default function App() {
 
   // Navigation active tab
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "cases" | "calculators" | "calendar" | "chat" | "adliran" | "finance" | "backup" | "backup-center" | "add-reminder" | "event-archive" | "terminology" | "laws" | "laws-db" | "nazariat" | "deadline-result" | "judicial-precedents" | "ai-analysis" | "court-simulator" | "pleading-drafting" | "quick-notes"
+    "dashboard" | "cases" | "calculators" | "calendar" | "chat" | "adliran" | "finance" | "backup" | "backup-center" | "add-reminder" | "event-archive" | "terminology" | "laws" | "laws-db" | "nazariat" | "deadline-result" | "judicial-precedents" | "ai-analysis" | "court-simulator" | "pleading-drafting" | "quick-notes" | "debts" | "bills" | "medication-reminder"
   >("dashboard");
   const [activeCaseSubTab, setActiveCaseSubTab] = useState<"cases" | "closedCases" | "clients">("cases");
   const [targetCaseId, setTargetCaseId] = useState<string | undefined>(undefined);
@@ -926,6 +931,52 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
     setAppQuote(getRandomQuote());
   };
 
+  // Firebase state tracker
+  const [user, setUser] = useState<User | null>(null);
+  const [isCloudRestoring, setIsCloudRestoring] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Track user login/logout transitions to handle secure clearing and auto-hydration properly
+  const prevUserRef = useRef<User | null>(null);
+  useEffect(() => {
+    if (prevUserRef.current && !user) {
+      console.log("User logged out. Clearing local private state to protect privacy and allow fresh sync.");
+      const resetLocalData = async () => {
+        // 1. Delete IndexedDB keys
+        await Promise.all([
+          documentDb.delete("idx_r_clients"),
+          documentDb.delete("idx_r_cases"),
+          documentDb.delete("idx_r_notes"),
+          documentDb.delete("idx_r_documents"),
+          documentDb.delete("idx_r_events")
+        ]);
+
+        // 2. Delete localStorage keys
+        import('./utils/safeStorage').then(({ safeStorage }) => {
+          safeStorage.removeItem("r_clients");
+          safeStorage.removeItem("r_cases");
+          safeStorage.removeItem("r_notes");
+          safeStorage.removeItem("r_documents");
+          safeStorage.removeItem("r_events");
+
+          // 3. Re-load defaults
+          const defaults = loadAllData();
+          setClients(defaults.clients);
+          setCases(defaults.cases);
+          setNotes(defaults.notes);
+          setDocuments(defaults.documents);
+          setEvents(defaults.events);
+        });
+      };
+      resetLocalData().catch(console.error);
+    }
+    prevUserRef.current = user;
+  }, [user]);
+
   // Load Initial persistent states with resilient fallback layers
   const [dataLoaded, setDataLoaded] = useState(false);
   useEffect(() => {
@@ -945,14 +996,16 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
         const idxDocuments = await documentDb.get("idx_r_documents");
         const idxEvents = await documentDb.get("idx_r_events");
 
-        if (idxClients && idxCases) {
-          localClients = JSON.parse(idxClients);
-          localCases = JSON.parse(idxCases);
-          localNotes = idxNotes ? JSON.parse(idxNotes) : [];
-          localDocuments = idxDocuments ? JSON.parse(idxDocuments) : [];
-          localEvents = idxEvents ? JSON.parse(idxEvents) : [];
+        if (idxClients || idxCases || idxEvents) {
+          const fallbackData = loadAllData();
+          localClients = idxClients ? JSON.parse(idxClients) : fallbackData.clients;
+          localCases = idxCases ? JSON.parse(idxCases) : fallbackData.cases;
+          localNotes = idxNotes ? JSON.parse(idxNotes) : fallbackData.notes;
+          localDocuments = idxDocuments ? JSON.parse(idxDocuments) : fallbackData.documents;
+          localEvents = idxEvents ? JSON.parse(idxEvents) : fallbackData.events;
           usingIndexedDB = true;
-          console.log("Loaded data successfully from robust IndexedDB storage.");
+          console.log("Loaded data successfully from robust IndexedDB storage (with fallbacks if needed).");
+
           
           const idxFiredAlarms = await documentDb.get("idx_r_fired_alarms");
           if (idxFiredAlarms) {
@@ -1011,11 +1064,13 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
           delete copy.dataUrl; // Keep IndexedDB metadata small, binary urls are stored separately
           return copy;
         });
-        await documentDb.set("idx_r_clients", JSON.stringify(clients));
-        await documentDb.set("idx_r_cases", JSON.stringify(cases));
-        await documentDb.set("idx_r_notes", JSON.stringify(notes));
-        await documentDb.set("idx_r_documents", JSON.stringify(safeDocs));
-        await documentDb.set("idx_r_events", JSON.stringify(events));
+        await Promise.all([
+          documentDb.set("idx_r_clients", JSON.stringify(clients)),
+          documentDb.set("idx_r_cases", JSON.stringify(cases)),
+          documentDb.set("idx_r_notes", JSON.stringify(notes)),
+          documentDb.set("idx_r_documents", JSON.stringify(safeDocs)),
+          documentDb.set("idx_r_events", JSON.stringify(events))
+        ]);
         
         // Notify Service Worker to check alarms immediately
         if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
@@ -1029,28 +1084,47 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
           safeStorage.setItem("r_notes", JSON.stringify(notes));
           safeStorage.setItem("r_events", JSON.stringify(events));
         });
+
+        // Automatically sync updated states with Firestore Cloud if user is authenticated
+        // SAFEGUARD: Do NOT sync to cloud if we are currently restoring, or if local data is empty/default
+        // to prevent overwriting cloud backup during login/startup or restore operations!
+        const isLocalEmpty = (clients.length === 0 && cases.length === 0 && notes.length === 0 && documents.length === 0 && events.length === 0) ||
+                             (clients.length === 3 && clients[0]?.id === "cl_1" &&
+                              cases.length === 3 && cases[0]?.id === "ca_1" &&
+                              notes.length === 3 && notes[0]?.id === "no_1" &&
+                              documents.length === 2 && documents[0]?.id === "do_1" &&
+                              events.length === 5 && events[0]?.id === "ev_today_1");
+
+        if (user && !isCloudRestoring && !isLocalEmpty) {
+          syncFullStateToCloud(user.uid, {
+            clients,
+            cases,
+            notes,
+            documents: safeDocs,
+            events
+          }).catch(cloudErr => {
+            console.warn("Auto cloud sync failed:", cloudErr);
+          });
+        }
       } catch (e) {
         console.warn("IndexedDB auto-save failed:", e);
       }
     };
     persistToIndexedDB();
-  }, [clients, cases, notes, documents, events, dataLoaded]);
-
-  // Firebase state tracker
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+  }, [clients, cases, notes, documents, events, dataLoaded, user, isCloudRestoring]);
 
   // Auto-restore from Firestore cloud if local storage is empty/default and a user is logged in
   useEffect(() => {
     if (user && dataLoaded) {
-      const isLocalEmpty = (clients.length === 0 && cases.length === 0) ||
-                           (clients.length === 3 && clients[0].id === "cl_1" && cases.length === 3 && cases[0].id === "ca_1");
+      const isLocalEmpty = (clients.length === 0 && cases.length === 0 && notes.length === 0 && documents.length === 0 && events.length === 0) ||
+                           (clients.length === 3 && clients[0]?.id === "cl_1" &&
+                            cases.length === 3 && cases[0]?.id === "ca_1" &&
+                            notes.length === 3 && notes[0]?.id === "no_1" &&
+                            documents.length === 2 && documents[0]?.id === "do_1" &&
+                            events.length === 5 && events[0]?.id === "ev_today_1");
       if (isLocalEmpty) {
         console.log("Local state is empty/default. Attempting to auto-load backup from Firestore for user:", user.uid);
+        setIsCloudRestoring(true);
         restoreFromCloud(user.uid)
           .then((cloudData) => {
             if (cloudData) {
@@ -1060,6 +1134,9 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
           })
           .catch((err) => {
             console.error("Auto-restoring from Firestore failed:", err);
+          })
+          .finally(() => {
+            setIsCloudRestoring(false);
           });
       }
     }
@@ -1153,6 +1230,43 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
     } else {
       setIsAuthorized(false);
     }
+  };
+
+  const handleUpdateProfile = (name: string, nationalId: string, pass: string, photo?: string) => {
+    setLawyerName(name);
+    setLawyerNationalId(nationalId);
+    setLawyerPassword(pass);
+    if (photo !== undefined) {
+      setLawyerPhoto(photo);
+      safeStorage.setItem("r_lawyer_photo", photo);
+    }
+    setIsRegistered(true);
+    safeStorage.setItem("r_lawyer_name", name);
+    safeStorage.setItem("r_lawyer_national_id", nationalId);
+    safeStorage.setItem("r_lawyer_password", pass);
+    safeStorage.setItem("r_lawyer_registered", "true");
+  };
+
+  const handleAddEvent = (event: LegalEvent) => {
+    const updated = [event, ...events];
+    setEvents(updated);
+    saveData("r_events", updated);
+  };
+
+  const handleUpdateEvent = (updatedEvent: LegalEvent) => {
+    const updated = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+    setEvents(updated);
+    saveData("r_events", updated);
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    const updated = events.filter(e => e.id !== id);
+    setEvents(updated);
+    saveData("r_events", updated);
+  };
+
+  const handleAddCaseNote = (note: CaseNote) => {
+    handleAddNote(note);
   };
 
   // --- PERSISTENCE SYNCHRONIZERS ---
@@ -1328,7 +1442,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
   };
 
   const handleDeleteClient = (id: string) => {
-    const associatedCases = cases.filter(c => c.clientId === id);
+    const associatedCases = cases.filter(c => c.clientIds?.includes(id));
     
     setCustomDialog({
       isOpen: true,
@@ -1350,7 +1464,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
 
           // 2. Delete associated cases
           setCases(prevCases => {
-            const updated = prevCases.filter(c => c.clientId !== id);
+            const updated = prevCases.filter(c => !c.clientIds?.includes(id));
             saveData("r_cases", updated);
             return updated;
           });
@@ -1397,130 +1511,74 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
     });
   };
 
-  const handleAddCaseNote = (note: CaseNote) => {
-    setNotes(prev => {
-      const updated = [...prev, note];
-      safeStorage.setItem("r_notes_v2", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const handleAddEvent = (ev: LegalEvent) => {
-    setEvents(prev => {
-      const updated = [ev, ...prev];
-      saveData("r_events", updated);
-      return updated;
-    });
-  };
-
-  const handleUpdateEvent = (updatedEv: LegalEvent) => {
-    setEvents(prev => {
-      const updated = prev.map(e => e.id === updatedEv.id ? updatedEv : e);
-      saveData("r_events", updated);
-      return updated;
-    });
-  };
-
-  const handleDeleteEvent = (id: string) => {
-    setCustomDialog({
-      isOpen: true,
-      title: "حذف جلسه یا رویداد",
-      message: "آیا از حذف این رویداد یا جلسه دادرسی تقویم اطمینان کامل دارید؟",
-      type: "confirm",
-      onConfirm: () => {
-        setEvents(prev => {
-          const updated = prev.filter(e => e.id !== id);
-          saveData("r_events", updated);
-          return updated;
-        });
-        setCustomDialog(null);
-      },
-      onCancel: () => setCustomDialog(null)
-    });
-  };
-
-  // --- GENERAL UPDATE PROFILE FOR LAWYER REGISTER ---
-  const handleUpdateProfile = (name: string, nationalId: string, pass: string, photo?: string) => {
-    setLawyerName(name);
-    setLawyerNationalId(nationalId);
-    setLawyerPassword(pass);
-    if (photo !== undefined) {
-      setLawyerPhoto(photo);
-      safeStorage.setItem("r_lawyer_photo", photo);
-    }
-    setIsRegistered(true);
-    safeStorage.setItem("r_lawyer_name", name);
-    safeStorage.setItem("r_lawyer_national_id", nationalId);
-    safeStorage.setItem("r_lawyer_password", pass);
-    safeStorage.setItem("r_lawyer_registered", "true");
-  };
-
   const handleTriggerRestoreData = async (parsed: any) => {
-    setClients(parsed.clients || []);
-    setCases(parsed.cases || []);
-    setNotes(parsed.notes || []);
-    setEvents(parsed.events || []);
+    try {
+      setIsCloudRestoring(true);
+      const totalClients = (parsed.clients || []).length;
+      const totalCases = (parsed.cases || []).length;
+      const totalEvents = (parsed.events || []).length;
+      const localDocsWithoutUrls = (parsed.documents || []).map((d: any) => {
+        const copy = { ...d };
+        delete copy.dataUrl;
+        return copy;
+      });
 
-    const docs = parsed.documents || [];
-    const localDocsWithoutUrls = [];
-    for (const doc of docs) {
-      if (doc.dataUrl) {
-        await documentDb.set(doc.id, doc.dataUrl);
+      setClients(parsed.clients || []);
+      setCases(parsed.cases || []);
+      setNotes(parsed.notes || []);
+      setEvents(parsed.events || []);
+
+      // Restore document binary data to IndexedDB
+      if (parsed.documents) {
+        for (const doc of parsed.documents) {
+          if (doc.dataUrl) {
+            await documentDb.set(doc.id, doc.dataUrl);
+          }
+        }
       }
-      const copy = { ...doc };
-      delete copy.dataUrl;
-      localDocsWithoutUrls.push(copy);
-    }
-    setDocuments(docs);
+      setDocuments(parsed.documents || []);
 
-    saveData("r_clients", parsed.clients || []);
-    saveData("r_cases", parsed.cases || []);
-    saveData("r_notes", parsed.notes || []);
-    saveData("r_documents", localDocsWithoutUrls);
-    saveData("r_events", parsed.events || []);
+      // Sync restored data to the cloud if a user is currently logged in,
+      // to prevent cloud metadata mismatch or older cloud backup from overwriting local state.
+      if (user) {
+        const persianDate = new Date().toLocaleDateString("fa-IR");
+        const meta = {
+          date: persianDate,
+          clientsCount: totalClients,
+          casesCount: totalCases,
+          notesCount: (parsed.notes || []).length,
+          docsCount: localDocsWithoutUrls.length,
+          eventsCount: totalEvents
+        };
 
-    const totalClients = (parsed.clients || []).length;
-    const totalCases = (parsed.cases || []).length;
-    const totalEvents = (parsed.events || []).length;
+        try {
+          safeStorage.setItem(`r_cloud_backup_meta_${user.uid}`, JSON.stringify(meta));
+          safeStorage.setItem("r_cloud_backup_slot", JSON.stringify({
+            backupDateShort: persianDate,
+            clients: parsed.clients || [],
+            cases: parsed.cases || [],
+            notes: parsed.notes || [],
+            documents: localDocsWithoutUrls,
+            events: parsed.events || []
+          }));
 
-    // Sync restored data to the cloud if a user is currently logged in,
-    // to prevent cloud metadata mismatch or older cloud backup from overwriting local state.
-    if (user) {
-      const persianDate = new Date().toLocaleDateString("fa-IR");
-      const meta = {
-        date: persianDate,
-        clientsCount: totalClients,
-        casesCount: totalCases,
-        notesCount: (parsed.notes || []).length,
-        docsCount: localDocsWithoutUrls.length,
-        eventsCount: totalEvents
-      };
-
-      try {
-        safeStorage.setItem(`r_cloud_backup_meta_${user.uid}`, JSON.stringify(meta));
-        safeStorage.setItem("r_cloud_backup_slot", JSON.stringify({
-          backupDateShort: persianDate,
-          clients: parsed.clients || [],
-          cases: parsed.cases || [],
-          notes: parsed.notes || [],
-          documents: localDocsWithoutUrls,
-          events: parsed.events || []
-        }));
-
-        await syncFullStateToCloud(user.uid, {
-          clients: parsed.clients || [],
-          cases: parsed.cases || [],
-          notes: parsed.notes || [],
-          documents: localDocsWithoutUrls,
-          events: parsed.events || []
-        });
-        console.log("Successfully synchronized restored data and metadata with the backup cloud.");
-      } catch (cloudErr) {
-        console.warn("Could not sync restored data/metadata with backup cloud:", cloudErr);
+          await syncFullStateToCloud(user.uid, {
+            clients: parsed.clients || [],
+            cases: parsed.cases || [],
+            notes: parsed.notes || [],
+            documents: localDocsWithoutUrls,
+            events: parsed.events || []
+          });
+          console.log("Successfully synchronized restored data and metadata with the backup cloud.");
+        } catch (cloudErr) {
+          console.warn("Could not sync restored data/metadata with backup cloud:", cloudErr);
+        }
       }
-    }
 
-    alert(`بازیابی با موفقیت انجام شد:\n- ${toPersianDigits(totalClients)} موکل\n- ${toPersianDigits(totalCases)} پرونده\n- ${toPersianDigits(totalEvents)} رویداد و آلارم\n\nاطلاعات با موفقیت جایگزین شد.`);
+      alert(`بازیابی با موفقیت انجام شد:\n- ${toPersianDigits(totalClients)} موکل\n- ${toPersianDigits(totalCases)} پرونده\n- ${toPersianDigits(totalEvents)} رویداد و آلارم\n\nاطلاعات با موفقیت جایگزین شد.`);
+    } finally {
+      setIsCloudRestoring(false);
+    }
   };
 
   // --- JSON BACKUP ARCHIVE ENGINES ---
@@ -1632,7 +1690,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
               <div className="min-w-0">
                 <h2 className="text-[12px] font-black text-white tracking-tight leading-6 truncate w-32">وکیل {lawyerName}</h2>
                 <p className="text-[9px] text-amber-400 font-bold tracking-wider">وکیل پایه یک دادگستری</p>
-                <div className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-400 font-extrabold uppercase">پورتال هوشمند</div>
+                <div className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-400 font-extrabold uppercase font-black">پورتال هوشمند</div>
               </div>
             </div>
 
@@ -1675,7 +1733,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
               }`}
             >
               <Coins className={`w-4 h-4 shrink-0 ${activeTab === "finance" ? "text-white" : "text-amber-500"}`} />
-              امور مالی و حسابداری دفتر
+              امور مالی و حسابداری
             </button>
 
             <button
@@ -1706,22 +1764,6 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
             >
               <CalendarIcon className="w-4 h-4 shrink-0" />
               رویدادها و تقویم شمسی
-            </button>
-
-            {/* Removed Adliran */}
-            <button
-              onClick={() => {
-                setActiveTab("adliran");
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition select-none cursor-pointer duration-150 ${
-                activeTab === "adliran"
-                  ? "bg-amber-500 text-white font-black shadow-md shadow-amber-500/10"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <Link2 className="w-4 h-4 shrink-0" />
-              اتصال به سایت عدل ایران
             </button>
 
             <button
@@ -1771,21 +1813,6 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
 
             <button
               onClick={() => {
-                setActiveTab("backup-center");
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition select-none cursor-pointer duration-150 ${
-                activeTab === "backup-center"
-                  ? "bg-amber-500 text-white font-black shadow-md shadow-amber-500/10"
-                  : "text-slate-400 hover:bg-slate-805 hover:text-white"
-              }`}
-            >
-              <Database className={`w-4 h-4 shrink-0 ${activeTab === "backup-center" ? "text-white" : "text-amber-500 hover:text-inherit"}`} />
-              پشتیبان‌گیری اطلاعات دفتر
-            </button>
-
-            <button
-              onClick={() => {
                 setActiveTab("backup");
                 setSidebarOpen(false);
               }}
@@ -1796,7 +1823,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
               }`}
             >
               <Shield className={`w-4 h-4 shrink-0 ${activeTab === "backup" ? "text-white" : "text-amber-500 hover:text-inherit"}`} />
-              تنظیمات امنیتی و رمز ورود
+              پشتیبان‌گیری، امنیت و رمز ورود
             </button>
 
             <button
@@ -1920,6 +1947,9 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
                 {activeTab === "cases" && <Briefcase className="w-5 h-5 font-bold" />}
                 {activeTab === "calculators" && <Scale className="w-5 h-5 font-bold" />}
                 {activeTab === "finance" && <Coins className="w-5 h-5 font-bold" />}
+                {activeTab === "debts" && <Coins className="w-5 h-5 font-bold" />}
+                {activeTab === "bills" && <Receipt className="w-5 h-5 font-bold" />}
+                {activeTab === "medication-reminder" && <Pill className="w-5 h-5 font-bold" />}
                 {activeTab === "calendar" && <CalendarIcon className="w-5 h-5 font-bold" />}
                 {activeTab === "chat" && <MessageSquare className="w-5 h-5 font-bold" />}
                 {activeTab === "adliran" && <Link2 className="w-5 h-5 font-bold" />}
@@ -1936,15 +1966,18 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
                 <h2 className="text-xs font-black text-slate-800">
                   {activeTab === "cases" && "پروفایل پرونده و موکلین"}
                   {activeTab === "calculators" && "محاسبات"}
-                  {activeTab === "finance" && "امور مالی و حسابداری دفتر"}
+                  {activeTab === "finance" && "امور مالی و حسابداری"}
+                  {activeTab === "debts" && "طلبکاری و بدهکاری"}
+                  {activeTab === "bills" && "سامانه پرداخت قبوض و مخارج"}
+                  {activeTab === "medication-reminder" && "یادآور دارو"}
                   {activeTab === "calendar" && "رویدادها و تقویم شمسی"}
                   {activeTab === "chat" && "مشاوره هوشمند (چت AI)"}
                   {activeTab === "adliran" && "اتصال به عدل ایران"}
                   {activeTab === "terminology" && "ترمینو‌لوژی حقوقی"}
                   {activeTab === "laws-db" && "مجموعه قوانین"}
                   {activeTab === "nazariat" && "نظریات مشورتی"}
-                  {activeTab === "backup" && "تنظیمات امنیتی و رمز ورود"}
-                  {activeTab === "backup-center" && "مرکز پشتیبان‌گیری اطلاعات دفتر"}
+                  {activeTab === "backup" && "پشتیبان‌گیری، امنیت و رمز ورود"}
+                  {activeTab === "backup-center" && "مرکز پشتیبان‌گیری اطلاعات"}
                   {activeTab === "event-archive" && "بایگانی رویدادهای گذشته"}
                   {activeTab === "deadline-result" && "نتیجه محاسبه موعد قانونی"}
                   {activeTab === "quick-notes" && "دفترچه یادداشت حقوقی (ثبت یادداشت سریع)"}
@@ -2120,7 +2153,17 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
           <QuickNotes />
         )}
 
+        {activeTab === "debts" && (
+          <DebtsCredits />
+        )}
 
+        {activeTab === "bills" && (
+          <BillsPayment />
+        )}
+
+        {activeTab === "medication-reminder" && (
+          <MedicationReminder />
+        )}
 
         {activeTab === "backup" && (
           <BackupSecurityHub
@@ -2136,6 +2179,25 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
             onUpdateProfile={handleUpdateProfile}
             onTriggerRestore={handleTriggerRestoreData}
             onLockScreen={handleSecureLogout}
+            onNavigate={(tab, subTab, stateToPass) => {
+              if (tab === "cases") {
+                if (typeof stateToPass === "string") {
+                  setTargetCaseId(stateToPass);
+                  setTargetCaseOpenNotes(false);
+                } else if (typeof stateToPass === "object" && stateToPass !== null) {
+                  setTargetCaseId(stateToPass.caseId);
+                  setTargetCaseOpenNotes(!!stateToPass.openNotes);
+                } else {
+                  setTargetCaseId(undefined);
+                  setTargetCaseOpenNotes(false);
+                }
+              } else {
+                setTargetCaseId(undefined);
+                setTargetCaseOpenNotes(false);
+              }
+              setActiveTab(tab as any);
+              if (subTab) setActiveCaseSubTab(subTab as any);
+            }}
           />
         )}
 

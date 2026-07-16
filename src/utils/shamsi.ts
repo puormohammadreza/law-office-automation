@@ -411,8 +411,17 @@ export function isEventExpired(jalaliDate: string, time: string, graceMinutes: n
     const eventDate = new Date(gy, gm - 1, gd, h, m);
     const now = new Date();
     
-    // threshold is eventDate + graceMinutes
-    const thresholdDate = new Date(eventDate.getTime() + graceMinutes * 60000);
+    // Check if the event date is today (same day)
+    const isSameDay = eventDate.getFullYear() === now.getFullYear() &&
+                      eventDate.getMonth() === now.getMonth() &&
+                      eventDate.getDate() === now.getDate();
+
+    // If it's today, we use a generous grace period of 720 minutes (12 hours) 
+    // to prevent the event from disappearing immediately from the user's dashboard during the day of their hearing!
+    const activeGrace = isSameDay ? Math.max(graceMinutes, 720) : graceMinutes;
+    
+    // threshold is eventDate + activeGrace
+    const thresholdDate = new Date(eventDate.getTime() + activeGrace * 60000);
     
     return now > thresholdDate;
   } catch (e) {

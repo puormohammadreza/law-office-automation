@@ -24,6 +24,7 @@ import { auth, signInWithGoogle, onAuthStateChanged, signOut } from "../firebase
 import { syncFullStateToCloud, restoreFromCloud } from "../firebase/db";
 type User = { uid: string; email?: string | null };
 import { Client, LegalCase, CaseNote, CaseDocument, LegalEvent } from "../types";
+import BackupCenter from "./BackupCenter";
 
 interface BackupSecurityHubProps {
   clients: any[];
@@ -38,6 +39,7 @@ interface BackupSecurityHubProps {
   onUpdateProfile: (name: string, nationalId: string, pass: string, photo?: string) => void;
   onTriggerRestore: (backupData: any) => void;
   onLockScreen: () => void;
+  onNavigate?: (tab: string, subTab?: string, stateToPass?: any) => void;
 }
 
 export default function BackupSecurityHub({
@@ -52,9 +54,10 @@ export default function BackupSecurityHub({
   lawyerPhoto,
   onUpdateProfile,
   onTriggerRestore,
-  onLockScreen
+  onLockScreen,
+  onNavigate
 }: BackupSecurityHubProps) {
-  const [activeSubTab, setActiveSubTab] = useState<"flash" | "cloud" | "security">("security");
+  const [activeSubTab, setActiveSubTab] = useState<"backup" | "security">("backup");
 
   // Auth state
   const [user, setUser] = useState<User | null>(null);
@@ -360,36 +363,81 @@ export default function BackupSecurityHub({
         <div>
           <div className="flex items-center gap-2 text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full w-fit border border-amber-500/20">
             <Lock className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span className="text-[9px] font-black uppercase tracking-widest leading-none">مدیریت دسترسی و امنیت پورتال</span>
+            <span className="text-[9px] font-black uppercase tracking-widest leading-none">مدیریت امنیت، پشتیبان‌گیری و دسترسی پورتال</span>
           </div>
           <h1 className="text-xl md:text-2xl font-black text-white mt-3">
-            امنیت و رمز ورود سیستم
+            پشتیبان‌گیری، امنیت و رمز ورود
           </h1>
           <p className="text-slate-400 text-xs mt-1.5 font-medium">
-            تنظیم هویت قانونی وکیل دفتری، اصلاح اطلاعات و مدیریت رمز عبور ورود در پورتال {lawyerName || "وکیل"}
+            پشتیبان‌گیری ابری و محلی اطلاعات دفتری، تنظیم هویت قانونی وکیل مسئول و مدیریت رمز عبور ورود در پورتال {lawyerName || "وکیل"}
           </p>
         </div>
         <button
           onClick={onLockScreen}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 select-none shrink-0 cursor-pointer shadow-md shadow-red-900/10"
+          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 select-none shrink-0 cursor-pointer shadow-md shadow-red-900/10 animate-pulse"
         >
           <Lock className="w-4 h-4" />
           قفل آنی نرم‌افزار (خروج امن)
         </button>
       </div>
 
-      {/* ACCESS & SECURITY SETTINGS */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6 animate-in fade-in duration-200">
-        <div className="border-b border-slate-100 pb-4">
-          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Key className="w-5 h-5 text-amber-500" />
-            شناسه امنیتی و رمز ورود پورتال {lawyerName || "وکیل"}
-          </h2>
-          <p className="text-[10px] text-slate-450 mt-1">تغییر کد عبور ورود به پورتال، نام هویتی و کدملی موجه جهت کنترل پنل‌های تستر و قفل اداری</p>
-        </div>
+      {/* Embedded Sub-Tabs selector */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
+        <button
+          onClick={() => setActiveSubTab("backup")}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 cursor-pointer select-none ${
+            activeSubTab === "backup"
+              ? "border-amber-500 text-slate-900 font-extrabold"
+              : "border-transparent text-slate-400 hover:text-slate-650"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            <span>مرکز پشتیبان‌گیری اطلاعات دفتر (محلی و ابری)</span>
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveSubTab("security")}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 cursor-pointer select-none ${
+            activeSubTab === "security"
+              ? "border-amber-500 text-slate-900 font-extrabold"
+              : "border-transparent text-slate-400 hover:text-slate-650"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            <span>تنظیمات امنیتی و رمز ورود پورتال</span>
+          </div>
+        </button>
+      </div>
 
-        <form onSubmit={handleSaveProfile} className="space-y-5 max-w-xl animate-in fade-in duration-200">
-          {profileSuccessMsg && (
+      {activeSubTab === "backup" ? (
+        <div className="animate-in fade-in duration-250">
+          <BackupCenter
+            clients={clients}
+            cases={cases}
+            notes={notes}
+            documents={documents}
+            events={events}
+            lawyerName={lawyerName}
+            lawyerNationalId={lawyerNationalId}
+            onTriggerRestore={onTriggerRestore}
+            onNavigate={onNavigate}
+          />
+        </div>
+      ) : (
+        /* ACCESS & SECURITY SETTINGS */
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6 animate-in fade-in duration-200">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <Key className="w-5 h-5 text-amber-500" />
+              شناسه امنیتی و رمز ورود پورتال {lawyerName || "وکیل"}
+            </h2>
+            <p className="text-[10px] text-slate-450 mt-1">تغییر کد عبور ورود به پورتال، نام هویتی و کدملی موجه جهت کنترل پنل‌های تستر و قفل اداری</p>
+          </div>
+
+          <form onSubmit={handleSaveProfile} className="space-y-5 max-w-xl animate-in fade-in duration-200">
+            {profileSuccessMsg && (
               <div className="p-3.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-2xl text-xs font-bold text-center flex items-center justify-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-600" />
                 <span>{profileSuccessMsg}</span>
@@ -503,6 +551,7 @@ export default function BackupSecurityHub({
             </div>
           </form>
         </div>
+      )}
     </div>
   );
 }

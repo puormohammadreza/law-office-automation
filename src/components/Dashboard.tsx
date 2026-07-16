@@ -210,6 +210,10 @@ export default function Dashboard({
   const [editSmsEnabled, setEditSmsEnabled] = useState(true);
   const [editSmsPhone1, setEditSmsPhone1] = useState("09144627119");
   const [editSmsPhone2, setEditSmsPhone2] = useState("09901095393");
+  const [editDocId, setEditDocId] = useState<string | undefined>(undefined);
+  const [editDocName, setEditDocName] = useState<string | undefined>(undefined);
+  const [editDocSize, setEditDocSize] = useState<string | undefined>(undefined);
+  const [editDocDataUrl, setEditDocDataUrl] = useState<string | undefined>(undefined);
 
   const [activeSubView, setActiveSubView] = useState<
     "home" | "sessions-list" | "reminders-list"
@@ -236,6 +240,11 @@ export default function Dashboard({
     setEditSmsEnabled(dev.smsEnabled !== false);
     setEditSmsPhone1(dev.smsPhone1 || "09144627119");
     setEditSmsPhone2(dev.smsPhone2 || "09901095393");
+
+    setEditDocId(ev.documentId);
+    setEditDocName(ev.documentName);
+    setEditDocSize(ev.documentSize);
+    setEditDocDataUrl(ev.documentDataUrl);
 
     const matched = cases.find((c) => c.id === ev.caseId);
     setEditCaseSearchTerm(
@@ -274,6 +283,10 @@ export default function Dashboard({
       smsEnabled: editSmsEnabled,
       smsPhone1: editSmsPhone1,
       smsPhone2: editSmsPhone2,
+      documentId: editDocId || undefined,
+      documentName: editDocName || undefined,
+      documentSize: editDocSize || undefined,
+      documentDataUrl: editDocDataUrl || undefined,
     } as any;
 
     if (onUpdateEvent) {
@@ -1059,12 +1072,12 @@ export default function Dashboard({
                         className={`border-t pt-2 flex items-center justify-between font-bold ${isNonJudicial ? "border-purple-200/60" : "border-slate-200/60"}`}
                       >
                         {isNonJudicial ? (
-                          <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-emerald-700 bg-emerald-500/10">
-                            از تاریخ: {toPersianDigits(ev.jalaliDate)}
+                          <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-purple-800 bg-purple-500/10">
+                            تاریخ جلسه رسیدگی: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         ) : (
-                          <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-emerald-700 bg-emerald-500/10">
-                            {ev.type === "جلسه دادرسی" ? "تاریخ جلسه رسیدگی" : "از تاریخ"}: {toPersianDigits(ev.jalaliDate)}
+                          <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-red-700 bg-red-500/10">
+                            تاریخ جلسه رسیدگی: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         )}
                         <span className="text-xs md:text-sm flex items-center">
@@ -1072,13 +1085,13 @@ export default function Dashboard({
                           dev.repeatSelected !== "بدون تکرار" &&
                           dev.endRepeatDate ? (
                             <span
-                              className={`px-2 py-1 rounded font-mono font-black ${isNonJudicial ? "text-purple-800 bg-purple-100" : "text-red-600 bg-red-500/10"}`}
+                              className={`px-2 py-1 rounded font-mono font-black ${isNonJudicial ? "text-emerald-700 bg-emerald-500/10" : "text-emerald-700 bg-emerald-500/10"}`}
                             >
                               تا تاریخ: {toPersianDigits(dev.endRepeatDate)}
                             </span>
                           ) : (
                             <span
-                              className={`px-2 py-1 rounded font-sans font-extrabold ${isNonJudicial ? "text-purple-700 bg-purple-500/10" : "text-red-700 bg-red-500/10"}`}
+                              className={`px-2 py-1 rounded font-sans font-extrabold ${isNonJudicial ? "text-emerald-700 bg-emerald-500/10" : "text-emerald-700 bg-emerald-500/10"}`}
                             >
                               {getRemainingTimeText(ev.jalaliDate, ev.time)}
                             </span>
@@ -1922,6 +1935,122 @@ export default function Dashboard({
                   onChange={(e) => setEditDesc(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-slate-200 focus:border-red-600 rounded-2xl font-bold outline-none text-slate-800 text-xs shadow-sm h-20 resize-none leading-relaxed"
                 />
+              </div>
+
+              {/* بخش مدارک و سند الحاقی (مدرک به عنوان مدلی برای دانلود و پیش نمایش) */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <label className="block text-xs font-black text-slate-400 pr-1">
+                  مدارک و سند الحاقی (به عنوان مدرک):
+                </label>
+                
+                {editDocDataUrl ? (
+                  <div className="space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-150">
+                    <div className="flex items-center justify-between text-right">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-slate-400 font-bold">نام مدرک الحاقی:</p>
+                          <p className="text-xs font-black text-slate-800 break-all">{editDocName}</p>
+                        </div>
+                      </div>
+                      <div className="text-left shrink-0 pl-1">
+                        <p className="text-[10px] text-slate-400 font-bold">حجم مدرک:</p>
+                        <p className="text-xs font-mono font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-0.5 inline-block">
+                          {editDocSize}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* کادر مربوطه نمایش مدرک (Evidence Box) */}
+                    <div className="border border-slate-150 rounded-2xl overflow-hidden bg-slate-100 p-2 flex items-center justify-center min-h-[150px] relative">
+                      {editDocDataUrl.startsWith("data:image/") ? (
+                        <img
+                          src={editDocDataUrl}
+                          alt="Preview"
+                          className="max-h-[220px] w-auto max-w-full rounded-xl object-contain shadow-sm"
+                        />
+                      ) : editDocDataUrl.startsWith("data:application/pdf") ? (
+                        <div className="w-full flex flex-col items-center gap-2 py-4">
+                          <iframe
+                            src={editDocDataUrl}
+                            className="w-full h-[180px] rounded-xl border border-slate-200 shadow-inner bg-white hidden sm:block"
+                            title="PDF Preview"
+                          />
+                          <div className="sm:hidden flex flex-col items-center gap-1.5 text-center p-2">
+                            <FileText className="w-10 h-10 text-slate-400 animate-bounce" />
+                            <p className="text-xs font-black text-slate-700">سند PDF آماده است</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-center p-4 gap-1">
+                          <FileText className="w-8 h-8 text-slate-400" />
+                          <p className="text-xs font-black text-slate-600">عدم امکان پیش‌نمایش مستقیم</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (editDocDataUrl) {
+                            const link = document.createElement("a");
+                            link.href = editDocDataUrl;
+                            link.download = editDocName || "مدرک_رویداد.pdf";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }
+                        }}
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-[10px] flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition shadow-sm"
+                      >
+                        <Download className="w-3.5 h-3.5 shrink-0" />
+                        <span>دانلود مستقیم فایل</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditDocId(undefined);
+                          setEditDocName(undefined);
+                          setEditDocSize(undefined);
+                          setEditDocDataUrl(undefined);
+                        }}
+                        className="py-2.5 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-[10px] cursor-pointer active:scale-95 transition border border-rose-150 animate-pulse"
+                        title="حذف مدرک"
+                      >
+                        <span>حذف مدرک</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-slate-200 rounded-[2rem] p-5 bg-slate-50 hover:bg-slate-100 transition-all text-center space-y-1.5 relative group shadow-inner">
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+                            setEditDocId(safeRandomUUID());
+                            setEditDocName(file.name);
+                            setEditDocSize(`${(file.size / 1024).toFixed(1)} کیلوبایت`);
+                            setEditDocDataUrl(dataUrl);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center gap-1">
+                      <Upload className="w-8 h-8 text-slate-300 group-hover:text-red-400 transition-colors" />
+                      <p className="text-[11px] font-black text-slate-500">بارگذاری مدرک یا تصویر سند الحاقی (PDF/تصویر)</p>
+                      <p className="text-[9px] text-slate-400 font-bold">(فایل به عنوان مدرک ثبت و پیوست رویداد می‌شود)</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Alarm Config */}

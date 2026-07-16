@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Download, Smartphone, X, Info, Share2, Check, HelpCircle, AlertTriangle } from "lucide-react";
+import { safeStorage } from "../utils/safeStorage";
 
 export default function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -27,13 +28,21 @@ export default function PWAInstallBanner() {
           await caches.delete(key);
         }
       }
-      localStorage.removeItem("pwa_banner_dismissed");
+      safeStorage.removeItem("pwa_banner_dismissed");
       setDeferredPrompt(null);
       setIsInstallable(false);
 
       if ('serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        await reg.update();
+        try {
+          // Attempt to register/update only if the file exists or is handled by vite-plugin-pwa
+          // virtual:pwa-register should already handle registration, but we do this for legacy support
+          if (import.meta.env.PROD) {
+            const reg = await navigator.serviceWorker.register('/sw.js');
+            await reg.update();
+          }
+        } catch (e) {
+          console.warn("Service worker registration skipped in dev mode or failed:", e);
+        }
       }
 
       setResetSuccess(true);
@@ -69,7 +78,7 @@ export default function PWAInstallBanner() {
       setDeferredPrompt(e);
       setIsInstallable(true);
       
-      const dismissed = localStorage.getItem("pwa_banner_dismissed");
+      const dismissed = safeStorage.getItem("pwa_banner_dismissed");
       if (dismissed !== "true") {
         setIsVisible(true);
       }
@@ -77,7 +86,7 @@ export default function PWAInstallBanner() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    const dismissed = localStorage.getItem("pwa_banner_dismissed");
+    const dismissed = safeStorage.getItem("pwa_banner_dismissed");
     if (dismissed === "true") {
       setIsVisible(false);
     }
@@ -98,7 +107,7 @@ export default function PWAInstallBanner() {
 
   const dismissBanner = () => {
     setIsVisible(false);
-    localStorage.setItem("pwa_banner_dismissed", "true");
+    safeStorage.setItem("pwa_banner_dismissed", "true");
   };
 
   if (isInstalled) {

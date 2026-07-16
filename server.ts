@@ -1588,6 +1588,22 @@ ${initialAnalysis ? `تحلیل هوشمند قبلی پرونده: ${JSON.strin
     }
   });
 
+  // Handle legacy /sw.js in development to prevent MIME type errors from SPA fallback
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/sw.js", (req, res) => {
+      res.setHeader("Content-Type", "application/javascript");
+      res.send(`
+        self.addEventListener('install', () => {
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', async () => {
+          await self.registration.unregister();
+          await self.clients.claim();
+        });
+      `);
+    });
+  }
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

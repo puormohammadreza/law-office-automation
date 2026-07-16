@@ -10,6 +10,7 @@ import {
   Users,
   FileText,
   Trash2,
+  Download,
   Paperclip,
   Plus,
   Calendar,
@@ -38,7 +39,9 @@ import {
   Sparkles,
   ArrowLeft,
   Camera,
-  Folder
+  Folder,
+  Check,
+  X
 } from "lucide-react";
 
 interface CaseManagerProps {
@@ -197,7 +200,25 @@ export default function CaseManager({
   // --- New Case Form States ---
   const [selectedCaseCategory, setSelectedCaseCategory] = useState<CaseCategory>("حقوقی");
   const [caseFormStep, setCaseFormStep] = useState(1); // 1: General, 2: Finance
-  const [caseClientId, setCaseClientId] = useState("");
+  const [caseClientIds, setCaseClientIds] = useState<string[]>([]);
+  const [caseClientSearch, setCaseClientSearch] = useState("");
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const container = document.getElementById('client-selection-container');
+      if (container && !container.contains(event.target as Node)) {
+        setShowClientDropdown(false);
+      }
+    };
+    if (showClientDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showClientDropdown]);
+
   const [caseNo, setCaseNo] = useState("");
   const [courtCaseNo, setCourtCaseNo] = useState("");
   const [caseArchiveNo, setCaseArchiveNo] = useState("");
@@ -270,7 +291,7 @@ export default function CaseManager({
 
   const resetCaseFormStates = () => {
     setCaseFormStep(1);
-    setCaseClientId("");
+    setCaseClientIds([]);
     setCaseNo("");
     setCourtCaseNo("");
     setCaseArchiveNo("");
@@ -426,12 +447,13 @@ export default function CaseManager({
       alert("لطفاً موضوع دعوی (خواسته) را وارد نمایید.");
       return false;
     }
-    if (!caseClientId) {
+    if (caseClientIds.length === 0) {
       alert("لطفاً موکل مرتبط را انتخاب نمایید.");
       return false;
     }
 
-    const client = clients.find(cl => cl.id === caseClientId);
+    const selectedClients = clients.filter(cl => caseClientIds.includes(cl.id));
+    const clientNames = selectedClients.map(cl => cl.name).join('، ');
 
     const totalContractAmountNum = parseDigits(caseTotalContractAmount);
     const downPaymentNum = parseDigits(caseDownPayment);
@@ -450,8 +472,8 @@ export default function CaseManager({
 
     const newCase: LegalCase = {
       id: "ca_" + Date.now(),
-      clientId: caseClientId,
-      clientName: client?.name || "",
+      clientIds: caseClientIds,
+      clientName: clientNames || "",
       clientRole: caseClientRole,
       category: selectedCaseCategory,
       opposingPartyName: caseOpposingName,
@@ -512,7 +534,7 @@ export default function CaseManager({
 
     setShowCaseForm(false);
     // Reset
-    setCaseClientId("");
+    setCaseClientIds([]);
     setCaseNo("");
     setCourtCaseNo("");
     setCaseArchiveNo("");
@@ -536,6 +558,8 @@ export default function CaseManager({
     setCaseSanaPassword("");
     setCaseContractNo("");
     setCaseInstallments([]);
+    setCaseClientIds([]);
+    setCaseClientSearch("");
     return true;
   };
 
@@ -817,13 +841,14 @@ export default function CaseManager({
   const handlePrint = (caseToPrint?: LegalCase, includeFinancial: boolean = true, fullReport: boolean = false) => {
     const caseObj = caseToPrint || selectedCase;
     if (!caseObj) return;
-    const associatedClient = clients.find(cl => cl.id === caseObj.clientId);
-
-    const clientName = associatedClient?.name || caseObj.clientName;
+    const associatedClients = clients.filter(cl => caseObj.clientIds?.includes(cl.id));
+    const clientName = associatedClients.map(cl => cl.name).join('، ') || caseObj.clientName;
     const clientRole = caseObj.clientRole;
-    const clientPhone = associatedClient?.phoneNumber;
-    const clientNationalId = associatedClient?.nationalId;
-    const clientBirthDate = associatedClient?.birthDate;
+    // We'll use the first client's data for basic fields if needed, or handle multiple
+    const firstClient = associatedClients[0];
+    const clientPhone = firstClient?.phoneNumber;
+    const clientNationalId = firstClient?.nationalId;
+    const clientBirthDate = firstClient?.birthDate;
 
     // Filter notes, documents and events for full report
     const caseNotes = notes.filter(n => n.caseId === caseObj.id);
@@ -1626,7 +1651,7 @@ export default function CaseManager({
                               setSelectedCaseCategory(c.category || "حقوقی");
                               setShowCaseForm(true);
                               // Pre-fill states here
-                              setCaseClientId(c.clientId);
+                              setCaseClientIds(c.clientIds || []);
                               setCaseNo(toEnglishDigits(c.caseNumber || "").replace(/\D/g, ""));
                               setCourtCaseNo(c.courtCaseNumber ? toEnglishDigits(c.courtCaseNumber).replace(/\D/g, "") : "");
                               setCaseArchiveNo(c.archiveNumber ? toEnglishDigits(c.archiveNumber) : "");
@@ -2032,7 +2057,7 @@ export default function CaseManager({
             <form onSubmit={(e) => {
               e.preventDefault();
               if (editingCase) {
-                if (!caseClientId) {
+                if (caseClientIds.length === 0) {
                   alert("لطفاً موکل مرتبط را انتخاب نمایید.");
                   return;
                 }
@@ -2057,8 +2082,8 @@ export default function CaseManager({
 
                 const updatedCase: LegalCase = {
                   ...editingCase,
-                  clientId: caseClientId,
-                  clientName: clients.find(cl => cl.id === caseClientId)?.name || editingCase.clientName,
+                  clientIds: caseClientIds,
+                  clientName: clients.filter(cl => caseClientIds.includes(cl.id)).map(cl => cl.name).join('، ') || editingCase.clientName,
                   clientRole: caseClientRole,
                   category: selectedCaseCategory,
                   opposingPartyName: caseOpposingName,
@@ -2147,19 +2172,99 @@ export default function CaseManager({
               {caseFormStep === 1 && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    <div className="space-y-1 col-span-1 sm:col-span-2 lg:col-span-2">
-                       <label className="text-slate-500">انتخاب موکل مرتبط (پرونده پایه)</label>
-                       <select
-                         value={caseClientId}
-                         onChange={(e) => setCaseClientId(e.target.value)}
-                         className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-slate-900 text-xs font-medium"
-                       >
-                         <option value="">یک موکل انتخاب کنید...</option>
-                         {clients.map(cl => (
-                           <option key={cl.id} value={cl.id}>{cl.name} (کدملی: {toPersianDigits(cl.nationalId)})</option>
-                         ))}
-                       </select>
-                    </div>
+                        <div className="space-y-1 col-span-1 sm:col-span-2 lg:col-span-2" id="client-selection-container">
+                           <label className="text-slate-500 font-bold text-xs">انتخاب یک یا چند موکل</label>
+                           <div className="relative">
+                             <div 
+                               onClick={() => setShowClientDropdown(!showClientDropdown)}
+                               className="w-full min-h-[40px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus-within:ring-1 focus-within:ring-slate-900 text-xs font-medium cursor-pointer flex flex-wrap gap-1.5 items-center"
+                             >
+                               {caseClientIds.length === 0 ? (
+                                 <span className="text-slate-400">یک یا چند موکل انتخاب کنید...</span>
+                               ) : (
+                                 caseClientIds.map(id => {
+                                   const cl = clients.find(c => c.id === id);
+                                   return (
+                                     <span key={id} className="bg-slate-900 text-white px-2 py-1 rounded-lg flex items-center gap-1.5 transition-all hover:bg-slate-800">
+                                       <span className="max-w-[120px] truncate">{cl?.name}</span>
+                                       <X 
+                                         className="w-3.5 h-3.5 cursor-pointer hover:text-red-400" 
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           setCaseClientIds(prev => prev.filter(i => i !== id));
+                                         }} 
+                                       />
+                                     </span>
+                                   );
+                                 })
+                               )}
+                               <div className="mr-auto">
+                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showClientDropdown ? 'rotate-180' : ''}`} />
+                               </div>
+                             </div>
+
+                             {showClientDropdown && (
+                               <div className="absolute z-[100] mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-2xl p-2 space-y-2 max-h-72 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
+                                 <div className="relative">
+                                   <Search className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
+                                   <input 
+                                     autoFocus
+                                     type="text"
+                                     placeholder="جستجوی نام یا کدملی..."
+                                     value={caseClientSearch}
+                                     onChange={(e) => setCaseClientSearch(e.target.value)}
+                                     className="w-full pr-9 pl-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs outline-none focus:ring-1 focus:ring-slate-900"
+                                   />
+                                 </div>
+                                 <div className="overflow-y-auto flex-1 space-y-0.5 custom-scrollbar pb-1">
+                                   {clients.filter(cl => 
+                                     cl.name.toLowerCase().includes(caseClientSearch.toLowerCase()) || 
+                                     cl.nationalId.includes(caseClientSearch)
+                                   ).length === 0 ? (
+                                     <div className="flex flex-col items-center justify-center py-6 text-slate-400">
+                                       <Users className="w-8 h-8 mb-2 opacity-20" />
+                                       <p className="text-xs">موردی یافت نشد</p>
+                                     </div>
+                                   ) : (
+                                     clients.filter(cl => 
+                                       cl.name.toLowerCase().includes(caseClientSearch.toLowerCase()) || 
+                                       cl.nationalId.includes(caseClientSearch)
+                                     ).map(cl => {
+                                       const isSelected = caseClientIds.includes(cl.id);
+                                       return (
+                                         <div 
+                                           key={cl.id}
+                                           onClick={() => {
+                                             if (isSelected) {
+                                               setCaseClientIds(prev => prev.filter(i => i !== cl.id));
+                                             } else {
+                                               setCaseClientIds(prev => [...prev, cl.id]);
+                                             }
+                                           }}
+                                           className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                                             isSelected ? 'bg-amber-50 text-amber-900' : 'hover:bg-slate-50 text-slate-700'
+                                           }`}
+                                         >
+                                           <div className="flex items-center gap-3">
+                                             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                               isSelected ? 'bg-amber-600 border-amber-600' : 'border-slate-300 bg-white'
+                                             }`}>
+                                               {isSelected && <Check className="w-3 h-3 text-white" />}
+                                             </div>
+                                             <div className="text-xs">
+                                               <p className="font-bold">{cl.name}</p>
+                                               <p className={`text-[10px] ${isSelected ? 'text-amber-600/70' : 'text-slate-500'}`}>کدملی: {toPersianDigits(cl.nationalId)}</p>
+                                             </div>
+                                           </div>
+                                         </div>
+                                       );
+                                     })
+                                   )}
+                                 </div>
+                               </div>
+                             )}
+                           </div>
+                        </div>
 
                     {/* کادر شماره پرونده جهت باز کردن پنجره اختصاصی شماره‌ها */}
                     {selectedCaseCategory !== 'اظهارنامه' ? (
@@ -3260,36 +3365,36 @@ export default function CaseManager({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-slate-200 p-6 rounded-2xl text-xs bg-slate-50/30">
                   {hasValue(printableCase.clientName) && (
-                    <p className="text-slate-700"><strong>نام موکل:</strong> <span className="text-blue-600 font-semibold">{printableCase.clientName}</span></p>
+                    <p className="text-slate-700"><strong>نام موکلین:</strong> <span className="text-blue-600 font-semibold">{printableCase.clientName}</span></p>
                   )}
                   {hasValue(printableCase.clientRole) && (
                     <p className="text-slate-700"><strong>نقش موکل:</strong> <span className="text-blue-600 font-semibold">{printableCase.clientRole}</span></p>
                   )}
                   {(() => {
-                    const cl = clients.find(cl => cl.id === printableCase.clientId);
-                    if (!cl) return null;
-                    return (
-                      <>
-                        {cl.phoneNumber && (
-                          <p className="text-slate-700"><strong>تلفن همراه:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(cl.phoneNumber)}</span></p>
-                        )}
-                        {cl.nationalId && (
-                          <p className="text-slate-700"><strong>کد ملی:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(cl.nationalId)}</span></p>
-                        )}
-                        {cl.birthDate && (
-                          <p className="text-slate-700"><strong>تاریخ تولد:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(cl.birthDate)}</span></p>
-                        )}
-                        {cl.fatherName && (
-                          <p className="text-slate-700"><strong>نام پدر:</strong> <span className="text-blue-600 font-semibold">{toPersianDigits(cl.fatherName)}</span></p>
-                        )}
-                        {cl.address && (
-                          <p className="text-slate-700 sm:col-span-2"><strong>نشانی محل سکونت / کار:</strong> <span className="text-blue-600 font-semibold">{toPersianDigits(cl.address)}</span></p>
-                        )}
-                        {cl.description && (
-                          <p className="text-slate-700 sm:col-span-2"><strong>یادداشت پرونده موکل:</strong> <span className="text-blue-600 font-semibold">{toPersianDigits(cl.description)}</span></p>
-                        )}
-                      </>
-                    );
+                    const associatedClients = clients.filter(cl => printableCase.clientIds?.includes(cl.id));
+                    if (associatedClients.length === 0) return null;
+                    return associatedClients.map((cl, idx) => (
+                      <div key={cl.id} className={`pt-3 ${idx > 0 ? 'border-t border-slate-100 mt-3' : ''}`}>
+                        <p className="text-slate-900 font-bold mb-2">اطلاعات موکل {toPersianDigits(idx + 1)}: {cl.name}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                          {cl.phoneNumber && (
+                            <p className="text-slate-700"><strong>تلفن همراه:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(cl.phoneNumber)}</span></p>
+                          )}
+                          {cl.nationalId && (
+                            <p className="text-slate-700"><strong>کد ملی:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(cl.nationalId)}</span></p>
+                          )}
+                          {cl.birthDate && (
+                            <p className="text-slate-700"><strong>تاریخ تولد:</strong> <span className="text-blue-600 font-semibold font-mono">{toPersianDigits(cl.birthDate)}</span></p>
+                          )}
+                          {cl.fatherName && (
+                            <p className="text-slate-700"><strong>نام پدر:</strong> <span className="text-blue-600 font-semibold">{toPersianDigits(cl.fatherName)}</span></p>
+                          )}
+                          {cl.address && (
+                            <p className="text-slate-700 sm:col-span-2"><strong>نشانی:</strong> <span className="text-blue-600 font-semibold">{toPersianDigits(cl.address)}</span></p>
+                          )}
+                        </div>
+                      </div>
+                    ));
                   })()}
                 </div>
               </div>
@@ -4258,6 +4363,15 @@ export default function CaseManager({
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
+                            {doc.dataUrl && (
+                              <button
+                                onClick={() => triggerDirectDownload(doc.dataUrl!, doc.name)}
+                                className="text-amber-600 hover:text-amber-850 p-1.5 rounded-lg hover:bg-amber-50 cursor-pointer"
+                                title="دانلود مستقیم سند"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             {editingDocId !== doc.id && (
                               <button
                                 onClick={() => {

@@ -38,7 +38,7 @@ const INITIAL_CLIENTS: Client[] = [
 const INITIAL_CASES: LegalCase[] = [
   {
     id: "ca_1",
-    clientId: "cl_1",
+    clientIds: ["cl_1"],
     clientName: "زهرا حسینی",
     caseNumber: "۱۴۰۳۹۸۷۶۵۴۳۲۱۰۰۱",
     archiveNumber: "ب/۴۰۳/۱۱",
@@ -67,7 +67,7 @@ const INITIAL_CASES: LegalCase[] = [
   },
   {
     id: "ca_2",
-    clientId: "cl_2",
+    clientIds: ["cl_2"],
     clientName: "مرتضی کریمی",
     caseNumber: "۱۴۰۴۹۱۲۳۴۵۶۷۸۰۰۲",
     archiveNumber: "ک/۴۰۴/۴۵",
@@ -94,7 +94,7 @@ const INITIAL_CASES: LegalCase[] = [
   },
   {
     id: "ca_3",
-    clientId: "cl_3",
+    clientIds: ["cl_3"],
     clientName: "مریم دانا",
     caseNumber: "۱۴۰۴۳۱۲۳۴۵۶۷۸۹۹۹",
     archiveNumber: "ح/۴۰۴/۷۸",

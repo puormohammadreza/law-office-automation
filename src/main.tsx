@@ -3,6 +3,20 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { registerSW } from 'virtual:pwa-register';
+
+// Register PWA service worker automatically
+if ('serviceWorker' in navigator) {
+  registerSW({
+    immediate: true,
+    onRegistered(r) {
+      console.log('SW Registered: ', r);
+    },
+    onRegisterError(error) {
+      console.log('SW registration error', error);
+    }
+  });
+}
 
 let hasOpener = false;
 try {
@@ -10,7 +24,6 @@ try {
 } catch (e) {
   hasOpener = false;
 }
-
 let hasHashMatch = false;
 let hashVal = '';
 try {
@@ -21,7 +34,6 @@ try {
 } catch (e) {
   hasHashMatch = false;
 }
-
 if (hasHashMatch) {
   const params = new URLSearchParams(hashVal);
   const token = params.get('access_token');
