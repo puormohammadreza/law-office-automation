@@ -55,6 +55,7 @@ import {
   Lock,
   Clock,
   CloudUpload,
+  CloudOff,
   ArrowRight,
   Bell,
   CheckCircle2,
@@ -339,6 +340,10 @@ export default function App() {
       let retries = 3;
       let delay = 1500;
       let lastError: any = null;
+
+      if (!navigator.onLine) {
+        throw new Error("آفلاین - استفاده از داده‌های پیش‌فرض");
+      }
 
       while (retries >= 0) {
         try {
@@ -1652,7 +1657,12 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
           </div>
           <div className="flex flex-col">
             <h1 className="text-[9.5px] sm:text-[11px] font-bold text-amber-400 leading-tight">اتوماسیون هوشمند دفتر وکالت</h1>
-            <p className="text-[13px] sm:text-base font-black text-white mt-0.5 leading-none select-none tracking-wide">{lawyerName || "رضا پورمحمد"}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-[13px] sm:text-base font-black text-white leading-none select-none tracking-wide">{lawyerName || "رضا پورمحمد"}</p>
+              {!isOnline && (
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -1691,6 +1701,13 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
                 <h2 className="text-[12px] font-black text-white tracking-tight leading-6 truncate w-32">وکیل {lawyerName}</h2>
                 <p className="text-[9px] text-amber-400 font-bold tracking-wider">وکیل پایه یک دادگستری</p>
                 <div className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-400 font-extrabold uppercase font-black">پورتال هوشمند</div>
+                {/* Connectivity Status Indicator */}
+                <div className="mt-2 flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-500 shadow-[0_0_8px_rgba(100,116,139,0.5)]'}`}></div>
+                  <span className={`text-[8px] font-black tracking-tight ${isOnline ? 'text-emerald-500' : 'text-slate-400'}`}>
+                    {isOnline ? 'وضعیت آنلاین (همگام‌سازی ابری)' : 'وضعیت آفلاین (ذخیره محلی)'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -2003,6 +2020,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
             cases={cases}
             events={events}
             lawyerName={lawyerName}
+            isOnline={isOnline}
             onNavigate={(tab, subTab, stateToPass) => {
               if (tab === "add-reminder" && stateToPass) {
                 setEditingReminder(stateToPass);
@@ -2257,6 +2275,21 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
           />
         )}
       </main>
+
+      {/* OFFLINE/ONLINE TOAST INDICATOR */}
+      <div className={`fixed bottom-4 right-4 z-[200] transition-all duration-500 transform ${showOnlineToast || !isOnline ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+        <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 backdrop-blur-md ${
+          isOnline 
+            ? 'bg-emerald-950/80 border-emerald-900/50 text-emerald-400' 
+            : 'bg-rose-950/80 border-rose-900/50 text-rose-400'
+        }`}>
+          {isOnline ? <CheckCircle2 className="w-5 h-5" /> : <CloudOff className="w-5 h-5" />}
+          <div>
+            <h4 className="text-xs font-black">{isOnline ? 'اتصال برقرار شد' : 'شما آفلاین هستید'}</h4>
+            <p className="text-[10px] opacity-80 mt-0.5">{isOnline ? 'اطلاعات با سرور همگام خواهد شد' : 'نرم‌افزار در حالت آفلاین کار می‌کند (ذخیره محلی)'}</p>
+          </div>
+        </div>
+      </div>
 
       {/* CUSTOM DIALOG MODAL (IFRAME-SAFE OVERLAYS) */}
       {customDialog && customDialog.isOpen && (

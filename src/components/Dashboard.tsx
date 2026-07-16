@@ -62,6 +62,7 @@ interface DashboardProps {
   cases: LegalCase[];
   events: LegalEvent[];
   lawyerName?: string;
+  isOnline?: boolean;
   onNavigate: (tab: any, subTab?: any, stateToPass?: any) => void;
   onAddEvent?: (newEv: LegalEvent) => void;
   onUpdateEvent?: (updatedEv: LegalEvent) => void;
@@ -74,6 +75,7 @@ export default function Dashboard({
   cases,
   events,
   lawyerName,
+  isOnline,
   onNavigate,
   onAddEvent,
   onUpdateEvent,
@@ -426,11 +428,19 @@ export default function Dashboard({
             <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="space-y-2.5">
-              <div className="flex items-center gap-1.5 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full w-fit border border-amber-500/20">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[8px] font-black uppercase tracking-widest leading-none">
-                  سامانه مدیریت هوشمند وکالت
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full w-fit border border-amber-500/20">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-[8px] font-black uppercase tracking-widest leading-none">
+                    سامانه مدیریت هوشمند وکالت
+                  </span>
+                </div>
+                {!isOnline && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 text-amber-400/80 rounded-full text-[10px] font-bold border border-amber-500/30 animate-pulse">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                    حالت آفلاین (استفاده از حافظه داخلی)
+                  </div>
+                )}
               </div>
 
               <h1 className="text-base md:text-lg font-black text-white">
@@ -827,7 +837,7 @@ export default function Dashboard({
 
                       <div className="border-t border-emerald-200/50 pt-2 flex items-center justify-between font-bold">
                         <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-emerald-850 bg-emerald-500/10">
-                          تاریخ جلسه رسیدگی: {toPersianDigits(ev.jalaliDate)}
+                          تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
                         </span>
                         <span className="text-xs md:text-sm font-medium font-sans flex items-center">
                           {dev.repeatSelected &&
@@ -1073,11 +1083,11 @@ export default function Dashboard({
                       >
                         {isNonJudicial ? (
                           <span className="px-2 py-1 rounded font-mono text-xs md:text-sm font-black text-purple-800 bg-purple-500/10">
-                            تاریخ جلسه رسیدگی: {toPersianDigits(ev.jalaliDate)}
+                            تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         ) : (
                           <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-red-700 bg-red-500/10">
-                            تاریخ جلسه رسیدگی: {toPersianDigits(ev.jalaliDate)}
+                            تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         )}
                         <span className="text-xs md:text-sm flex items-center">
@@ -1209,7 +1219,7 @@ export default function Dashboard({
                     required
                     placeholder={
                       modalType === "جلسه دادرسی"
-                        ? "مثال: جلسه رسیدگی شعبه اول ..."
+                        ? "مثال: آغاز رویداد یا جلسه دادرسی شعبه اول ..."
                         : "مثال: پیگیری لایحه دفاعیه ..."
                     }
                     value={sessionTitle}
@@ -1500,7 +1510,7 @@ export default function Dashboard({
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
                   <p className="text-[10px] text-slate-400 font-bold">
-                    تاریخ برگزاری (شمسی):
+                    تاریخ آغاز رویداد:
                   </p>
                   <p className="text-xs font-mono font-black text-slate-800">
                     {toPersianDigits(selectedViewEvent.jalaliDate)}

@@ -791,7 +791,7 @@ ${ev.description ? `(بر اساس یادداشت رویداد: ${ev.description
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="مثلاً: جلسه رسیدگی شعبه ۲ خانواده خانواده باهنر"
+                  placeholder="مثلاً: آغاز رویداد یا جلسه دادرسی شعبه ۲ خانواده باهنر"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-slate-900"
                 />
               </div>
@@ -812,7 +812,7 @@ ${ev.description ? `(بر اساس یادداشت رویداد: ${ev.description
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-500">ساعت جلسه رسیدگی</label>
+                  <label className="text-slate-500">ساعت آغاز رویداد</label>
                   <input
                     type="text"
                     required
