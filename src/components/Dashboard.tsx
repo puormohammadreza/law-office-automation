@@ -836,8 +836,8 @@ export default function Dashboard({
                       </div>
 
                       <div className="border-t border-emerald-200/50 pt-2 flex items-center justify-between font-bold">
-                        <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-emerald-850 bg-emerald-500/10">
-                          تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
+                        <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-red-600 bg-red-500/10">
+                          تاریخ جلسه: {toPersianDigits(ev.jalaliDate)}
                         </span>
                         <span className="text-xs md:text-sm font-medium font-sans flex items-center">
                           {dev.repeatSelected &&
@@ -1086,8 +1086,8 @@ export default function Dashboard({
                             تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         ) : (
-                          <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-red-700 bg-red-500/10">
-                            تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
+                          <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-red-600 bg-red-500/10">
+                            تاریخ جلسه: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         )}
                         <span className="text-xs md:text-sm flex items-center">
@@ -1510,7 +1510,7 @@ export default function Dashboard({
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
                   <p className="text-[10px] text-slate-400 font-bold">
-                    تاریخ آغاز رویداد:
+                    {selectedViewEvent.type === "جلسه دادرسی" ? "تاریخ جلسه:" : "تاریخ آغاز رویداد:"}
                   </p>
                   <p className="text-xs font-mono font-black text-slate-800">
                     {toPersianDigits(selectedViewEvent.jalaliDate)}

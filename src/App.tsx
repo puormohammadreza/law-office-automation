@@ -168,21 +168,36 @@ export default function App() {
 
   // Connectivity tracking states
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [showOnlineToast, setShowOnlineToast] = useState<boolean>(false);
+  const [showOnlineToast, setShowOnlineToast] = useState<boolean>(!navigator.onLine);
 
   useEffect(() => {
+    // If initially offline, hide the toast after 5 seconds
+    if (!navigator.onLine) {
+      const initialTimer = setTimeout(() => {
+        setShowOnlineToast(false);
+      }, 5000);
+      return () => clearTimeout(initialTimer);
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: any;
     const handleOnline = () => {
       setIsOnline(true);
       setShowOnlineToast(true);
-      const timer = setTimeout(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
         setShowOnlineToast(false);
       }, 5000);
-      return () => clearTimeout(timer);
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      setShowOnlineToast(false);
+      setShowOnlineToast(true);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        setShowOnlineToast(false);
+      }, 5000);
     };
 
     window.addEventListener("online", handleOnline);
@@ -191,6 +206,7 @@ export default function App() {
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      if (timer) clearTimeout(timer);
     };
   }, []);
 
@@ -1376,7 +1392,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.clients && parsed.cases && parsed.notes && parsed.documents && parsed.events) {
+        if (parsed.clients || parsed.cases || parsed.documents || parsed.events) {
           setCustomDialog({
             isOpen: true,
             title: "تایید بازیابی اطلاعات کلاسه",
@@ -1528,6 +1544,30 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
         return copy;
       });
 
+      // Save restored data to localStorage
+      saveData("r_clients", parsed.clients || []);
+      saveData("r_cases", parsed.cases || []);
+      saveData("r_notes", parsed.notes || []);
+      saveData("r_events", parsed.events || []);
+      saveData("r_documents", localDocsWithoutUrls);
+      
+      if (parsed.lawyerName) {
+        setLawyerName(parsed.lawyerName);
+        safeStorage.setItem("r_lawyer_name", parsed.lawyerName);
+      }
+      if (parsed.lawyerNationalId) {
+        setLawyerNationalId(parsed.lawyerNationalId);
+        safeStorage.setItem("r_lawyer_national_id", parsed.lawyerNationalId);
+      }
+      if (parsed.lawyerPassword) {
+        setLawyerPassword(parsed.lawyerPassword);
+        safeStorage.setItem("r_lawyer_password", parsed.lawyerPassword);
+      }
+      if (parsed.lawyerPhoto) {
+        setLawyerPhoto(parsed.lawyerPhoto);
+        safeStorage.setItem("r_lawyer_photo", parsed.lawyerPhoto);
+      }
+
       setClients(parsed.clients || []);
       setCases(parsed.cases || []);
       setNotes(parsed.notes || []);
@@ -1542,6 +1582,15 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
         }
       }
       setDocuments(parsed.documents || []);
+
+      // Explicitly update IndexedDB index keys to ensure sync before restart
+      await Promise.all([
+        documentDb.set("idx_r_clients", JSON.stringify(parsed.clients || [])),
+        documentDb.set("idx_r_cases", JSON.stringify(parsed.cases || [])),
+        documentDb.set("idx_r_notes", JSON.stringify(parsed.notes || [])),
+        documentDb.set("idx_r_documents", JSON.stringify(localDocsWithoutUrls)),
+        documentDb.set("idx_r_events", JSON.stringify(parsed.events || []))
+      ]);
 
       // Sync restored data to the cloud if a user is currently logged in,
       // to prevent cloud metadata mismatch or older cloud backup from overwriting local state.
@@ -1587,13 +1636,27 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
   };
 
   // --- JSON BACKUP ARCHIVE ENGINES ---
-  const handleExportBackup = () => {
+  const handleExportBackup = async () => {
+    const fullDocs = await Promise.all(
+      documents.map(async (doc) => {
+        const dataUrl = await documentDb.get(doc.id);
+        return {
+          ...doc,
+          dataUrl: dataUrl || doc.dataUrl || ""
+        };
+      })
+    );
+
     const backupObj = {
       clients,
       cases,
       notes,
-      documents,
+      documents: fullDocs,
       events,
+      lawyerName,
+      lawyerNationalId,
+      lawyerPassword,
+      lawyerPhoto,
       exportVersion: "1.0",
       exportDate: new Date().toISOString()
     };
@@ -1602,7 +1665,9 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
     const link = document.createElement("a");
     link.href = url;
     link.download = `پشتیبان_دفتر_وکالت_${lawyerName.replace(/\s+/g, "_")}_${new Date().toLocaleDateString("fa-IR").replace(/\//g, "-")}.json`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -2228,6 +2293,8 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
             events={events}
             lawyerName={lawyerName}
             lawyerNationalId={lawyerNationalId}
+            lawyerPassword={lawyerPassword}
+            lawyerPhoto={lawyerPhoto}
             onTriggerRestore={handleTriggerRestoreData}
              onNavigate={(tab, subTab, stateToPass) => {
               if (tab === "cases") {
@@ -2277,7 +2344,10 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
       </main>
 
       {/* OFFLINE/ONLINE TOAST INDICATOR */}
-      <div className={`fixed bottom-4 right-4 z-[200] transition-all duration-500 transform ${showOnlineToast || !isOnline ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+      <div 
+        className={`fixed bottom-4 right-4 z-[200] transition-all duration-500 transform cursor-pointer ${showOnlineToast ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
+        onClick={() => setShowOnlineToast(false)}
+      >
         <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 backdrop-blur-md ${
           isOnline 
             ? 'bg-emerald-950/80 border-emerald-900/50 text-emerald-400' 

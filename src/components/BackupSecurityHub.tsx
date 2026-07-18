@@ -22,6 +22,7 @@ import {
 import { toPersianDigits } from "../utils/shamsi";
 import { auth, signInWithGoogle, onAuthStateChanged, signOut } from "../firebase/config";
 import { syncFullStateToCloud, restoreFromCloud } from "../firebase/db";
+import { documentDb } from "../utils/documentStorage";
 type User = { uid: string; email?: string | null };
 import { Client, LegalCase, CaseNote, CaseDocument, LegalEvent } from "../types";
 import BackupCenter from "./BackupCenter";
@@ -115,25 +116,39 @@ export default function BackupSecurityHub({
   }, []);
 
   // --- FLASH USB EXPORT ---
-  const handleFlashExport = () => {
+  const handleFlashExport = async () => {
+    const fullDocs = await Promise.all(
+      documents.map(async (doc) => {
+        const dataUrl = await documentDb.get(doc.id);
+        return {
+          ...doc,
+          dataUrl: dataUrl || doc.dataUrl || ""
+        };
+      })
+    );
+
     const backupObj = {
       clients,
       cases,
       notes,
-      documents,
+      documents: fullDocs,
       events,
       exportVersion: "2.0_USB",
       exportDate: new Date().toISOString(),
       backupType: "USB_FLASH_DRIVE_EXPLICIT",
       lawyerName,
-      lawyerNationalId
+      lawyerNationalId,
+      lawyerPassword,
+      lawyerPhoto
     };
     const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = `پشتیبان_کامل_سیستم_فلش_${lawyerName.replace(/\s+/g, "_")}_${new Date().toLocaleDateString("fa-IR").replace(/\//g, "-")}.json`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
     // Simulated short log info
@@ -152,7 +167,7 @@ export default function BackupSecurityHub({
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.clients && parsed.cases && parsed.notes && parsed.documents && parsed.events) {
+        if (parsed.clients || parsed.cases || parsed.documents || parsed.events) {
           onTriggerRestore(parsed);
 
           // Update local cloud backup metadata display if user is logged in
@@ -160,11 +175,11 @@ export default function BackupSecurityHub({
             const persianDate = new Date().toLocaleDateString("fa-IR");
             const meta = {
               date: persianDate,
-              clientsCount: parsed.clients.length,
-              casesCount: parsed.cases.length,
-              notesCount: parsed.notes.length,
-              docsCount: parsed.documents.length,
-              eventsCount: parsed.events.length
+              clientsCount: (parsed.clients || []).length,
+              casesCount: (parsed.cases || []).length,
+              notesCount: (parsed.notes || []).length,
+              docsCount: (parsed.documents || []).length,
+              eventsCount: (parsed.events || []).length
             };
             setCloudBackupMeta(meta);
             setCloudBackupExists(true);

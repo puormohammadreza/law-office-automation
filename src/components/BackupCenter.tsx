@@ -43,6 +43,8 @@ interface BackupCenterProps {
   events: any[];
   lawyerName: string;
   lawyerNationalId: string;
+  lawyerPassword?: string;
+  lawyerPhoto?: string;
   onTriggerRestore: (backupData: any) => void;
   onNavigate?: (tab: string, subTab?: string, stateToPass?: any) => void;
 }
@@ -55,6 +57,8 @@ export default function BackupCenter({
   events,
   lawyerName,
   lawyerNationalId,
+  lawyerPassword,
+  lawyerPhoto,
   onTriggerRestore,
   onNavigate
 }: BackupCenterProps) {
@@ -237,7 +241,9 @@ export default function BackupCenter({
         const link = document.createElement("a");
         link.href = url;
         link.download = `پشتیبان دفتر_${new Date().toLocaleDateString("fa-IR").replace(/\//g, "-")}.json`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }
     } catch (err: any) {
@@ -329,18 +335,30 @@ export default function BackupCenter({
   }, [user]);
 
   // --- FLASH USB EXPORT ---
-  const handleFlashExport = () => {
+  const handleFlashExport = async () => {
+    const fullDocs = await Promise.all(
+      documents.map(async (doc) => {
+        const dataUrl = await documentDb.get(doc.id);
+        return {
+          ...doc,
+          dataUrl: dataUrl || doc.dataUrl || ""
+        };
+      })
+    );
+
     const backupObj = {
       clients,
       cases,
       notes,
-      documents,
+      documents: fullDocs,
       events,
       exportVersion: "2.0_USB",
       exportDate: new Date().toISOString(),
       backupType: "USB_FLASH_DRIVE_EXPLICIT",
       lawyerName,
-      lawyerNationalId
+      lawyerNationalId,
+      lawyerPassword,
+      lawyerPhoto
     };
     const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -369,7 +387,7 @@ export default function BackupCenter({
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.clients && parsed.cases && parsed.notes && parsed.documents && parsed.events) {
+        if (parsed.clients || parsed.cases || parsed.documents || parsed.events) {
           onTriggerRestore(parsed);
 
           // Update local cloud backup metadata display if user is logged in
@@ -377,11 +395,11 @@ export default function BackupCenter({
             const persianDate = new Date().toLocaleDateString("fa-IR");
             const meta = {
               date: persianDate,
-              clientsCount: parsed.clients.length,
-              casesCount: parsed.cases.length,
-              notesCount: parsed.notes.length,
-              docsCount: parsed.documents.length,
-              eventsCount: parsed.events.length
+              clientsCount: (parsed.clients || []).length,
+              casesCount: (parsed.cases || []).length,
+              notesCount: (parsed.notes || []).length,
+              docsCount: (parsed.documents || []).length,
+              eventsCount: (parsed.events || []).length
             };
             setCloudBackupMeta(meta);
             setCloudBackupExists(true);
