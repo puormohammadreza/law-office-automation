@@ -1087,7 +1087,7 @@ export default function Dashboard({
                           </span>
                         ) : (
                           <span className="px-2 py-1 rounded font-sans text-xs md:text-sm font-black text-red-600 bg-red-500/10">
-                            تاریخ جلسه: {toPersianDigits(ev.jalaliDate)}
+                            تاریخ آغاز رویداد: {toPersianDigits(ev.jalaliDate)}
                           </span>
                         )}
                         <span className="text-xs md:text-sm flex items-center">
