@@ -1629,7 +1629,17 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
         }
       }
 
-      alert(`بازیابی با موفقیت انجام شد:\n- ${toPersianDigits(totalClients)} موکل\n- ${toPersianDigits(totalCases)} پرونده\n- ${toPersianDigits(totalEvents)} رویداد و آلارم\n\nاطلاعات با موفقیت جایگزین شد.`);
+      setCustomDialog({
+        isOpen: true,
+        type: "alert",
+        title: "بازخوانی موفق",
+        message: "تمامی اطلاعات و اسناد و مدارک با موفقیت بازگردانی شد. جهت نهایی‌سازی تنظیمات و همگام‌سازی، سامانه نیاز به بازنشانی (Reload) دارد.",
+        onConfirm: () => window.location.reload(),
+        onCancel: () => window.location.reload()
+      });
+    } catch (err) {
+      console.error("Restore error:", err);
+      alert("خطا در بازخوانی اطلاعات: " + err);
     } finally {
       setIsCloudRestoring(false);
     }
@@ -1721,7 +1731,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
             )}
           </div>
           <div className="flex flex-col">
-            <h1 className="text-[9.5px] sm:text-[11px] font-bold text-amber-400 leading-tight">اتوماسیون هوشمند دفتر وکالت</h1>
+            <h1 className="text-[9.5px] sm:text-[11px] font-bold text-amber-400 leading-tight">اتوماسیون دفتر وکالت</h1>
             <div className="flex items-center gap-1.5 mt-0.5">
               <p className="text-[13px] sm:text-base font-black text-white leading-none select-none tracking-wide">{lawyerName || "رضا پورمحمد"}</p>
               {!isOnline && (
@@ -1765,7 +1775,7 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
               <div className="min-w-0">
                 <h2 className="text-[12px] font-black text-white tracking-tight leading-6 truncate w-32">وکیل {lawyerName}</h2>
                 <p className="text-[9px] text-amber-400 font-bold tracking-wider">وکیل پایه یک دادگستری</p>
-                <div className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-400 font-extrabold uppercase font-black">پورتال هوشمند</div>
+                <div className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-400 font-extrabold uppercase font-black">اتوماسیون وکالت</div>
                 {/* Connectivity Status Indicator */}
                 <div className="mt-2 flex items-center gap-1.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-500 shadow-[0_0_8px_rgba(100,116,139,0.5)]'}`}></div>

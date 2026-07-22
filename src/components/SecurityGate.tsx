@@ -238,7 +238,7 @@ export default function SecurityGate({
 
           <div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-              سامانه هوشمند و یکپارچه مدیریت پرونده‌های وکالت و دفتری
+              اتوماسیون دفتر وکالت
             </p>
           </div>
         </div>

@@ -432,7 +432,7 @@ export default function Dashboard({
                 <div className="flex items-center gap-1.5 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full w-fit border border-amber-500/20">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span className="text-[8px] font-black uppercase tracking-widest leading-none">
-                    سامانه مدیریت هوشمند وکالت
+                    اتوماسیون دفتر وکالت
                   </span>
                 </div>
                 {!isOnline && (

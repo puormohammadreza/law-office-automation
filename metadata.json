@@ -1,6 +1,6 @@
 {
-  "name": "Law Office Automation",
-  "description": "سامانه هوشمند اتوماسیون و محاسبات حقوقی دفتر وکالت رضا پورمحمد",
+  "name": "اتوماسیون دفتر وکالت",
+  "description": "سامانه اتوماسیون و محاسبات حقوقی دفتر وکالت",
   "requestFramePermissions": [
     "microphone"
   ],
