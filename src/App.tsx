@@ -1633,9 +1633,9 @@ ${analysisResult.nextSteps.map((s, idx) => `${idx + 1}. ${s}`).join("\n")}
         isOpen: true,
         type: "alert",
         title: "بازخوانی موفق",
-        message: "تمامی اطلاعات و اسناد و مدارک با موفقیت بازگردانی شد. جهت نهایی‌سازی تنظیمات و همگام‌سازی، سامانه نیاز به بازنشانی (Reload) دارد.",
-        onConfirm: () => window.location.reload(),
-        onCancel: () => window.location.reload()
+        message: "تمامی اطلاعات و اسناد و مدارک با موفقیت بازگردانی شد.",
+        onConfirm: () => setCustomDialog(null),
+        onCancel: () => setCustomDialog(null)
       });
     } catch (err) {
       console.error("Restore error:", err);

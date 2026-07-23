@@ -47,7 +47,9 @@ class DocumentDb {
     if (this.memoryCache.has(id)) {
       return this.memoryCache.get(id) || null;
     }
-    // Try localStorage fallback
+
+    // Try localStorage fallback FIRST (faster, fully synchronous, prevents data loss if IndexedDB tx aborted)
+    // We can trust it because set() removes it if it exceeds quota.
     try {
       const localVal = localStorage.getItem("doc_fb_" + id);
       if (localVal) {
@@ -56,28 +58,29 @@ class DocumentDb {
       }
     } catch (e) {}
 
-    if (this.useFallback) return null;
+    // Try IndexedDB as fallback (used for >2MB data where localStorage fails/is removed)
+    if (!this.useFallback) {
+      try {
+        const db = await this.init();
+        const val = await new Promise<string | null>((resolve) => {
+          const tx = db.transaction(this.storeName, "readonly");
+          const store = tx.objectStore(this.storeName);
+          const req = store.get(id);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
 
-    try {
-      const db = await this.init();
-      return new Promise((resolve) => {
-        const tx = db.transaction(this.storeName, "readonly");
-        const store = tx.objectStore(this.storeName);
-        const req = store.get(id);
-        req.onsuccess = () => {
-          const val = req.result || null;
-          if (val) {
-            this.memoryCache.set(id, val);
-          }
-          resolve(val);
-        };
-        req.onerror = () => resolve(null);
-      });
-    } catch (e) {
-      console.error("IndexedDB error reading:", e);
-      this.useFallback = true;
-      return null;
+        if (val) {
+          this.memoryCache.set(id, val);
+          return val;
+        }
+      } catch (e) {
+        console.error("IndexedDB error reading:", e);
+        this.useFallback = true;
+      }
     }
+
+    return null;
   }
 
   async set(id: string, dataUrl: string): Promise<void> {
@@ -85,12 +88,16 @@ class DocumentDb {
     this.memoryCache.set(id, dataUrl);
 
     // Try storing in localStorage as a backup if small (< 2MB)
+    // If it fails or is too large, we MUST remove the old key to prevent reading stale data.
     if (dataUrl.length < 2 * 1024 * 1024) {
       try {
         localStorage.setItem("doc_fb_" + id, dataUrl);
       } catch (e) {
         console.warn("LocalStorage fallback write failed (probably quota):", e);
+        try { localStorage.removeItem("doc_fb_" + id); } catch(err){}
       }
+    } else {
+      try { localStorage.removeItem("doc_fb_" + id); } catch(err){}
     }
 
     if (this.useFallback) return;

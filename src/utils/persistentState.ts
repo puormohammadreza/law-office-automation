@@ -315,6 +315,11 @@ export function loadAllData() {
 /**
  * Storage Savers
  */
+import { documentDb } from "./documentStorage";
+
 export function saveData(key: string, data: any) {
-  safeStorage.setItem(key, JSON.stringify(data));
+  const str = JSON.stringify(data);
+  safeStorage.setItem(key, str);
+  // Synchronously initiate writing to documentDb to prevent data loss on immediate tab close
+  documentDb.set("idx_" + key, str).catch(e => console.warn("Background IndexedDB save failed:", e));
 }

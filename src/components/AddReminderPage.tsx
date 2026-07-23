@@ -551,10 +551,6 @@ export default function AddReminderPage({ cases, onAddEvent, onUpdateEvent, onBa
   };
 
   const uploadNoticeFile = (file: File) => {
-    if (!selectedCaseId) {
-      setUploadError("خطا: برای الصاق فایل ابلاغیه یا اخطاریه، ابتدا باید از بخش پرونده مرتبط (در پایین)، یک پرونده انتخاب کنید.");
-      return;
-    }
     setUploadError("");
 
     const isImage = file.type.startsWith("image/");
@@ -566,7 +562,7 @@ export default function AddReminderPage({ cases, onAddEvent, onUpdateEvent, onBa
       const dataUrl = event.target?.result as string;
       const newDoc: CaseDocument = {
         id: "do_" + Date.now(),
-        caseId: selectedCaseId,
+        caseId: selectedCaseId || "none",
         name: `ابلاغیه رویداد - ${file.name}`,
         type: isPdf ? "pdf" : isImage ? "image" : "other",
         size: toPersianDigits(sizeStr),
@@ -574,10 +570,10 @@ export default function AddReminderPage({ cases, onAddEvent, onUpdateEvent, onBa
         uploadedAt: new Date().toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" })
       };
       
-      if (onAddDocument) {
+      if (selectedCaseId && onAddDocument) {
         onAddDocument(newDoc);
-        setUploadedNotices(prev => [newDoc, ...prev]);
       }
+      setUploadedNotices(prev => [newDoc, ...prev]);
     };
     reader.readAsDataURL(file);
   };
@@ -1017,74 +1013,66 @@ export default function AddReminderPage({ cases, onAddEvent, onUpdateEvent, onBa
               <span className="text-[10px] font-black text-slate-400 block pr-1">بارگذاری فایل ابلاغیه یا اخطاریه</span>
               <div className="flex items-start gap-4">
                 <div className="flex-1">
-                  {!selectedCaseId ? (
-                    <div className="border border-dashed border-slate-200 rounded-2xl p-4 text-center bg-slate-50/50">
-                      <p className="text-[10px] font-bold text-amber-600">
-                        برای بارگذاری فایل ابلاغیه یا اخطاریه، ابتدا باید از گزینه‌ی بالا یک پرونده مرتبط انتخاب نمایید.
-                      </p>
+                  <div className="space-y-3">
+                    <div
+                      onDragEnter={handleNoticeDrag}
+                      onDragOver={handleNoticeDrag}
+                      onDragLeave={handleNoticeDrag}
+                      onDrop={handleNoticeDrop}
+                      className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition relative ${
+                        dragActive
+                          ? "border-amber-500 bg-amber-50/50"
+                          : "border-slate-200 hover:border-amber-400 bg-slate-50/50"
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        id="notice_file_upload"
+                        multiple={false}
+                        onChange={handleNoticeChange}
+                        className="hidden"
+                        accept=".pdf, image/*"
+                      />
+                      <label htmlFor="notice_file_upload" className="cursor-pointer block space-y-2">
+                        <FileUp className="w-6 h-6 text-slate-400 mx-auto animate-bounce" />
+                        <div className="text-[10px] font-bold text-slate-700">رها کردن فایل ابلاغیه در این ناحیه یا کلیک جهت بارگذاری</div>
+                        <p className="text-[8px] text-slate-400">فرمت‌های مجاز: PDF، تصاویر اسکن شده (بدون محدودیت تا ۲۰ مکابایت)</p>
+                      </label>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div
-                        onDragEnter={handleNoticeDrag}
-                        onDragOver={handleNoticeDrag}
-                        onDragLeave={handleNoticeDrag}
-                        onDrop={handleNoticeDrop}
-                        className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition relative ${
-                          dragActive
-                            ? "border-amber-500 bg-amber-50/50"
-                            : "border-slate-200 hover:border-amber-400 bg-slate-50/50"
-                        }`}
-                      >
-                        <input
-                          type="file"
-                          id="notice_file_upload"
-                          multiple={false}
-                          onChange={handleNoticeChange}
-                          className="hidden"
-                          accept=".pdf, image/*"
-                        />
-                        <label htmlFor="notice_file_upload" className="cursor-pointer block space-y-2">
-                          <FileUp className="w-6 h-6 text-slate-400 mx-auto animate-bounce" />
-                          <div className="text-[10px] font-bold text-slate-700">رها کردن فایل ابلاغیه در این ناحیه یا کلیک جهت بارگذاری</div>
-                          <p className="text-[8px] text-slate-400">فرمت‌های مجاز: PDF، تصاویر اسکن شده (بدون محدودیت تا ۲۰ مکابایت)</p>
-                        </label>
-                      </div>
 
-                      {uploadError && (
-                        <p className="text-[10px] font-bold text-red-500 text-right pr-1">{uploadError}</p>
-                      )}
+                    {uploadError && (
+                      <p className="text-[10px] font-bold text-red-500 text-right pr-1">{uploadError}</p>
+                    )}
 
-                      {/* Uploaded files list */}
-                      {uploadedNotices.length > 0 && (
-                        <div className="space-y-1.5 mt-2">
-                          <div className="text-[9px] font-extrabold text-emerald-600 block pr-1 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            ابلاغیه‌های الحاق‌شده به پرونده جاری ({toPersianDigits(uploadedNotices.length)} سند):
-                          </div>
-                          <div className="space-y-1 max-h-36 overflow-y-auto">
-                            {uploadedNotices.map((doc) => (
-                              <div key={doc.id} className="p-2 bg-emerald-50/40 border border-emerald-100 rounded-xl flex items-center justify-between">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  {doc.type === "image" && doc.dataUrl ? (
-                                    <img src={doc.dataUrl} alt={doc.name} className="w-6 h-6 rounded object-cover border border-emerald-200 shrink-0" />
-                                  ) : (
-                                    <div className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                      <FileText className="w-3.5 h-3.5" />
-                                    </div>
-                                  )}
-                                  <span className="text-[10px] font-black text-slate-700 truncate max-w-[200px]" dir="ltr">
-                                    {doc.name}
-                                  </span>
-                                </div>
-                                <span className="text-[9px] font-bold text-slate-400 shrink-0 pl-1">{doc.size}</span>
-                              </div>
-                            ))}
-                          </div>
+                    {/* Uploaded files list */}
+                    {uploadedNotices.length > 0 && (
+                      <div className="space-y-1.5 mt-2">
+                        <div className="text-[9px] font-extrabold text-emerald-600 block pr-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          فایل‌های الحاق‌شده ({toPersianDigits(uploadedNotices.length)} سند):
                         </div>
-                      )}
-                    </div>
-                  )}
+                        <div className="space-y-1 max-h-36 overflow-y-auto">
+                          {uploadedNotices.map((doc) => (
+                            <div key={doc.id} className="p-2 bg-emerald-50/40 border border-emerald-100 rounded-xl flex items-center justify-between">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {doc.type === "image" && doc.dataUrl ? (
+                                  <img src={doc.dataUrl} alt={doc.name} className="w-6 h-6 rounded object-cover border border-emerald-200 shrink-0" />
+                                ) : (
+                                  <div className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <FileText className="w-3.5 h-3.5" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] font-black text-slate-700 truncate max-w-[200px]" dir="ltr">
+                                  {doc.name}
+                                </span>
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-400 shrink-0 pl-1">{doc.size}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="w-6 flex justify-center text-slate-400 mt-3 shrink-0">
                   <FileUp className="w-5 h-5" />
@@ -1236,6 +1224,71 @@ export default function AddReminderPage({ cases, onAddEvent, onUpdateEvent, onBa
               </div>
               <div className="w-6 flex justify-center text-slate-400 shrink-0">
                 <Repeat className="w-5 h-5" />
+              </div>
+            </div>
+
+            {/* File Upload Zone for Non-Judicial Reminder */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-black text-slate-400 block pr-1">بارگذاری فایل (اختیاری)</span>
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <div className="space-y-3">
+                    <div
+                      className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition relative border-slate-200 hover:border-purple-400 bg-slate-50/50`}
+                    >
+                      <input
+                        type="file"
+                        id="nj_file_upload"
+                        multiple={false}
+                        onChange={handleNjFileUpload}
+                        className="hidden"
+                        accept=".pdf, image/*"
+                      />
+                      <label htmlFor="nj_file_upload" className="cursor-pointer block space-y-2">
+                        <FileUp className="w-6 h-6 text-slate-400 mx-auto animate-bounce" />
+                        <div className="text-[10px] font-bold text-slate-700">کلیک جهت بارگذاری فایل</div>
+                        <p className="text-[8px] text-slate-400">فرمت‌های مجاز: PDF، تصاویر اسکن شده</p>
+                      </label>
+                    </div>
+
+                    {/* Uploaded files list for Non-Judicial */}
+                    {njUploadedDoc && (
+                      <div className="space-y-1.5 mt-2">
+                        <div className="text-[9px] font-extrabold text-emerald-600 block pr-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          فایل الحاق‌شده:
+                        </div>
+                        <div className="space-y-1">
+                          <div className="p-2 bg-emerald-50/40 border border-emerald-100 rounded-xl flex items-center justify-between relative group">
+                            <div className="flex items-center gap-2 min-w-0 pr-6">
+                                <button
+                                   onClick={(e) => { e.preventDefault(); setNjUploadedDoc(null); setNjPdfFile(null); }}
+                                   className="absolute right-2 text-red-400 hover:text-red-600 bg-white hover:bg-red-50 p-1 rounded-full shadow-sm transition-colors border border-red-100"
+                                   title="حذف فایل"
+                                >
+                                   <X className="w-3.5 h-3.5" />
+                                </button>
+                              {njUploadedDoc.dataUrl && njUploadedDoc.dataUrl.startsWith("data:image/") ? (
+                                <img src={njUploadedDoc.dataUrl} alt={njUploadedDoc.name} className="w-6 h-6 rounded object-cover border border-emerald-200 shrink-0" />
+                              ) : (
+                                <div className="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                  <FileText className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                              <span className="text-[10px] font-black text-slate-700 truncate max-w-[150px]" dir="ltr">
+                                {njUploadedDoc.name}
+                              </span>
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-400 shrink-0 pl-1">{njUploadedDoc.size}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="w-6 flex justify-center text-slate-400 mt-3 shrink-0">
+                  <FileUp className="w-5 h-5" />
+                </div>
               </div>
             </div>
 
