@@ -191,6 +191,7 @@ export default function CaseManager({
   // --- New Client Form States ---
   const [clientName, setClientName] = useState("");
   const [clientNatId, setClientNatId] = useState("");
+  const [clientSanaPassword, setClientSanaPassword] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientFather, setClientFather] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -387,6 +388,7 @@ export default function CaseManager({
             ...editingClient,
             name: clientName,
             nationalId: toPersianDigits(clientNatId),
+            sanaPassword: clientSanaPassword,
             phoneNumber: toPersianDigits(clientPhone),
             fatherName: clientFather,
             birthDate: clientBirthDate,
@@ -400,6 +402,7 @@ export default function CaseManager({
             id: "cl_" + Date.now(),
             name: clientName,
             nationalId: toPersianDigits(clientNatId),
+            sanaPassword: clientSanaPassword,
             phoneNumber: toPersianDigits(clientPhone),
             fatherName: clientFather,
             birthDate: clientBirthDate,
@@ -414,6 +417,7 @@ export default function CaseManager({
     // Reset
     setClientName("");
     setClientNatId("");
+    setClientSanaPassword("");
     setClientPhone("");
     setClientFather("");
     setClientBirthDate("");
@@ -1451,6 +1455,7 @@ export default function CaseManager({
                   setEditingClient(null);
                   setClientName("");
                   setClientNatId("");
+                  setClientSanaPassword("");
                   setClientPhone("");
                   setClientFather("");
                   setClientBirthDate("");
@@ -1511,6 +1516,14 @@ export default function CaseManager({
           <button
             onClick={() => {
               setEditingClient(null);
+              setClientName("");
+              setClientNatId("");
+              setClientSanaPassword("");
+              setClientPhone("");
+              setClientFather("");
+              setClientBirthDate("");
+              setClientAddress("");
+              setClientDesc("");
               setShowClientForm(true);
             }}
             className="px-4 py-2 bg-slate-900 hover:bg-slate-850 text-white rounded-xl text-[10px] font-black transition flex items-center gap-2 shadow-sm cursor-pointer select-none"
@@ -1732,6 +1745,7 @@ export default function CaseManager({
                   <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs">
                     <th className="p-4">نام موکل</th>
                     <th className="p-4">شناسه ملی</th>
+                    <th className="p-4">رمز ثنا</th>
                     <th className="p-4">شماره تماس پیامک ثنا</th>
                     <th className="p-4">نام پدر</th>
                     <th className="p-4">تاریخ تولد</th>
@@ -1744,6 +1758,7 @@ export default function CaseManager({
                     <tr key={cl.id} className="hover:bg-slate-50/50 transition">
                       <td className="p-4 text-slate-900 font-bold">{cl.name}</td>
                       <td className="p-4 font-mono">{toPersianDigits(cl.nationalId)}</td>
+                      <td className="p-4 font-mono">{cl.sanaPassword ? toPersianDigits(cl.sanaPassword) : "-"}</td>
                       <td className="p-4 font-mono">{toPersianDigits(cl.phoneNumber)}</td>
                       <td className="p-4">{cl.fatherName}</td>
                       <td className="p-4 font-mono">{cl.birthDate ? toPersianDigits(cl.birthDate) : "-"}</td>
@@ -1762,6 +1777,7 @@ export default function CaseManager({
                                     setEditingClient(cl);
                                     setClientName(cl.name);
                                     setClientNatId(cl.nationalId);
+                                    setClientSanaPassword(cl.sanaPassword || "");
                                     setClientPhone(cl.phoneNumber);
                                     setClientFather(cl.fatherName);
                                     setClientBirthDate(cl.birthDate || "");
@@ -1903,7 +1919,7 @@ export default function CaseManager({
             </div>
 
             <form onSubmit={handleCreateClient} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="text-slate-500">نام و نام خانوادگی موکل</label>
                   <input
@@ -1924,6 +1940,16 @@ export default function CaseManager({
                     value={clientNatId}
                     onChange={(e) => setClientNatId(e.target.value)}
                     placeholder="مثال: ۰۰۸۷۶۵۴۳۲۱"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-slate-900 font-mono text-xs font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500">رمز شخصی ثنا</label>
+                  <input
+                    type="text"
+                    value={clientSanaPassword}
+                    onChange={(e) => setClientSanaPassword(e.target.value)}
+                    placeholder="مثال: ۱۲۳۴۵"
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-slate-900 font-mono text-xs font-medium"
                   />
                 </div>
@@ -4051,6 +4077,7 @@ export default function CaseManager({
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-slate-100 pb-3 text-xs">
                     <p><strong>نام موکل:</strong> {printableClient.name}</p>
                     <p><strong>کد ملی / شناسه ملی:</strong> <span className="font-mono">{toPersianDigits(printableClient.nationalId)}</span></p>
+                    <p><strong>رمز شخصی ثنا:</strong> <span className="font-mono">{printableClient.sanaPassword ? toPersianDigits(printableClient.sanaPassword) : "-"}</span></p>
                     <p><strong>نام پدر:</strong> {printableClient.fatherName || "-"}</p>
                     <p><strong>تاریخ تولد:</strong> <span className="font-mono">{printableClient.birthDate ? toPersianDigits(printableClient.birthDate) : "-"}</span></p>
                 </div>

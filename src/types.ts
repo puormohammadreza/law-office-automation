@@ -6,6 +6,7 @@ export interface Client {
   id: string;
   name: string;             // نام و نام خانوادگی موکل
   nationalId: string;       // کد ملی
+  sanaPassword?: string;    // رمز شخصی ثنا
   phoneNumber: string;      // شماره تماس
   fatherName: string;       // نام پدر
   birthDate?: string;       // تاریخ تولد
